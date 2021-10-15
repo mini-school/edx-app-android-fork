@@ -1,8 +1,5 @@
 name: Android CI
-on: [push]
-
-env:
-  SAMPLE_PATH: EdX
+on: [ push ]
 
 jobs:
   build:
@@ -13,39 +10,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Copy C! gradle.properties
-        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
-
-      - name: set up JDK 8
+      - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '8'
 
       - name: Build Project
-        working-directory: ${{ env.SAMPLE_PATH }}
-        run: .gradlew assembledebug
+        run: ./gradlew assembleDebug
 
       - name: Upload build ouputs (APKS)
         uses: actions/upload-artifact@v2
         with:
           name: build-outputs
-          path: ${{ env.SAMPLE_PATH }}/app/build/outputs
+          path: OpenEdXMobile/build/outputs/apk/
 
   test:
     needs: build
     runs-on: macos-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        api-level: [24, 27, 30]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Copy CI gradle.properties
-        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: set up JDK 8
         uses: actions/setup-java@v2
@@ -53,11 +40,102 @@ jobs:
           distribution: 'adopt'
           java-version: '8'
 
-      - name: Run tests
-        uses: actions/android-emulator-runner@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
         with:
-          api-level: ${{ matrix.api-level }}
+          python-version: 2.7
+
+      - name: Install dependecies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --user codecov
+          pip install --user Pillow==6.2.2
+
+      - name: Gradle cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/buildSrc/**/*.kt') }}
+
+      - name: AVD cache
+        uses: actions/cache@v2
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-28
+
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          arch: x86
+          target: google_apis
+          profile: Nexus 4
+          force-avd-creation: false
+          disable-animations: false
+          script: echo "Done"
+
+      - name: Run tests
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 28
           arch: x86
           disable-animations: true
-          script: ./gradlew jacocoTestProdDebugUnitTestReport
-          working-directory: ${{ env.SAMPLE_PATH }}
+          target: google_apis
+          profile: Nexus 4
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save
+          script: |
+            chmod +x gradlew
+            ./gradlew jacocoTestProdDebugUnitTestReport
+
+      - name: Run E2E
+        if: always()
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          arch: x86
+          disable-animations: true
+          target: google_apis
+          profile: Nexus 4
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save
+          script: |
+            ./gradlew verifyProdDebuggableAndroidTestScreenshotTest -PdisablePreDex
+
+      - name: Run Artifacts
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          arch: x86
+          disable-animations: true
+          target: google_apis
+          profile: Nexus 4
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save
+          script: |
+            ./gradlew copyLintBuildArtifacts
+            ./gradlew copyUnitTestBuildArtifacts
+            ./gradlew pullProdDebuggableAndroidTestScreenshots -PdisablePreDex
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: SS Reports
+          path: OpenEdXMobile/build/screenshotsProdDebuggableAndroidTest
+
+      - name: Generate Report
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: report
+          path: artifacts
+
+      - name: Upload Test Report
+        run: bash <(curl -s https://codecov.io/bash) -f "artifacts/reports/jacoco/jacocoTestProdDebugUnitTestReport/jacocoTestProdDebugUnitTestReport.xml"
