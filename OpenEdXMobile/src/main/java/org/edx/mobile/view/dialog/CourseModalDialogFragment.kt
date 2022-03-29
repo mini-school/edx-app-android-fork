@@ -19,8 +19,8 @@ import org.edx.mobile.extenstion.setVisibility
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.http.notifications.SnackbarErrorNotification
 import org.edx.mobile.inapppurchases.BillingProcessor
+import org.edx.mobile.inapppurchases.CourseUpgradeListener
 import org.edx.mobile.inapppurchases.ProductManager
-import org.edx.mobile.module.analytics.Analytics
 import org.edx.mobile.util.AppConstants
 import org.edx.mobile.util.InAppPurchasesException
 import org.edx.mobile.util.NonNullObserver
@@ -32,9 +32,11 @@ import javax.inject.Inject
 class CourseModalDialogFragment : DialogFragment() {
 
     private lateinit var binding: DialogUpgradeFeaturesBinding
+    private var screenName: String = ""
     private var courseId: String = ""
     private var price: String = ""
     private var isSelfPaced: Boolean = false
+    private lateinit var courseUpgradeListener: CourseUpgradeListener
 
     private var billingProcessor: BillingProcessor? = null
     private val iapViewModel: InAppPurchasesViewModel by viewModels()
@@ -48,6 +50,7 @@ class CourseModalDialogFragment : DialogFragment() {
             STYLE_NORMAL,
             R.style.AppTheme_NoActionBar
         )
+        courseUpgradeListener = parentFragment as CourseUpgradeListener
     }
 
     override fun onCreateView(
@@ -73,16 +76,15 @@ class CourseModalDialogFragment : DialogFragment() {
 
     private fun initViews() {
         arguments?.let { bundle ->
-            courseId = bundle.getString(KEY_COURSE_ID) ?: ""
-            price = bundle.getString(KEY_COURSE_PRICE) ?: ""
+            screenName = bundle.getString(KEY_SCREEN_NAME, "")
+            courseId = bundle.getString(KEY_COURSE_ID, "")
+            price = bundle.getString(KEY_COURSE_PRICE, "")
             isSelfPaced = bundle.getBoolean(KEY_IS_SELF_PACED)
             environment.analyticsRegistry.trackValuePropLearnMoreTapped(
-                courseId, null,
-                Analytics.Screens.COURSE_ENROLLMENT
+                courseId, null, screenName
             )
             environment.analyticsRegistry.trackValuePropModalView(
-                courseId, null,
-                Analytics.Screens.COURSE_ENROLLMENT
+                courseId, null, screenName
             )
         }
 
@@ -177,6 +179,8 @@ class CourseModalDialogFragment : DialogFragment() {
 
         iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
             showPurchaseSuccessSnackbar()
+            dismiss()
+            courseUpgradeListener.onComplete()
         })
 
         iapViewModel.errorMessage.observe(viewLifecycleOwner, NonNullObserver { errorMsg ->
@@ -247,6 +251,7 @@ class CourseModalDialogFragment : DialogFragment() {
     companion object {
         const val TAG: String = "CourseModalDialogFragment"
         const val KEY_MODAL_PLATFORM = "platform_name"
+        const val KEY_SCREEN_NAME = "screen_name"
         const val KEY_COURSE_ID = "course_id"
         const val KEY_COURSE_NAME = "course_name"
         const val KEY_COURSE_PRICE = "course_price"
@@ -255,14 +260,16 @@ class CourseModalDialogFragment : DialogFragment() {
         @JvmStatic
         fun newInstance(
             platformName: String,
+            screenName: String,
             courseId: String,
             courseName: String,
             price: String,
-            isSelfPaced: Boolean
+            isSelfPaced: Boolean,
         ): CourseModalDialogFragment {
             val frag = CourseModalDialogFragment()
             val args = Bundle().apply {
                 putString(KEY_MODAL_PLATFORM, platformName)
+                putString(KEY_SCREEN_NAME, screenName)
                 putString(KEY_COURSE_ID, courseId)
                 putString(KEY_COURSE_NAME, courseName)
                 putString(KEY_COURSE_PRICE, price)

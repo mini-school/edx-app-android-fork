@@ -54,6 +54,7 @@ import org.edx.mobile.http.HttpStatusException;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.http.notifications.FullScreenErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
+import org.edx.mobile.inapppurchases.CourseUpgradeListener;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.loader.AsyncTaskResult;
 import org.edx.mobile.loader.CourseOutlineAsyncLoader;
@@ -66,6 +67,7 @@ import org.edx.mobile.model.course.BlockPath;
 import org.edx.mobile.model.course.CourseBannerInfoModel;
 import org.edx.mobile.model.course.CourseComponent;
 import org.edx.mobile.model.course.CourseStructureV1Model;
+import org.edx.mobile.model.course.EnrollmentMode;
 import org.edx.mobile.model.course.HasDownloadEntry;
 import org.edx.mobile.model.course.VideoBlockModel;
 import org.edx.mobile.model.db.DownloadEntry;
@@ -85,12 +87,15 @@ import org.edx.mobile.util.UiUtils;
 import org.edx.mobile.view.adapters.CourseOutlineAdapter;
 import org.edx.mobile.view.common.TaskProgressCallback;
 import org.edx.mobile.view.dialog.AlertDialogFragment;
+import org.edx.mobile.view.dialog.FullscreenLoaderDialogFragment;
 import org.edx.mobile.view.dialog.VideoDownloadQualityDialogFragment;
 import org.edx.mobile.viewModel.CourseDateViewModel;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.inject.Inject;
 
@@ -103,7 +108,8 @@ import retrofit2.Response;
 @AndroidEntryPoint
 public class CourseOutlineFragment extends OfflineSupportBaseFragment
         implements RefreshListener, VideoDownloadHelper.DownloadManagerCallback,
-        LoaderManager.LoaderCallbacks<AsyncTaskResult<CourseComponent>>, BaseFragment.PermissionListener {
+        LoaderManager.LoaderCallbacks<AsyncTaskResult<CourseComponent>>, BaseFragment.PermissionListener,
+        CourseUpgradeListener {
     private final Logger logger = new Logger(getClass().getName());
     private static final int AUTOSCROLL_DELAY_MS = 500;
     private static final int SNACKBAR_SHOWTIME_MS = 5000;
@@ -148,7 +154,9 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     private String calendarTitle = "";
     private String accountName = "";
     private String screenName;
+
     private AlertDialogFragment loaderDialog;
+    private FullscreenLoaderDialogFragment fullscreenLoader;
 
     public static Bundle makeArguments(@NonNull EnrolledCoursesResponse model,
                                        @Nullable String courseComponentId, boolean isVideosMode, @ScreenDef String screenName) {
@@ -199,6 +207,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         calendarTitle = CalendarUtils.getCourseCalendarTitle(environment, courseData.getCourse().getName());
         accountName = CalendarUtils.getUserAccountForSync(environment);
         loaderDialog = AlertDialogFragment.newInstance(R.string.title_syncing_calendar, R.layout.alert_dialog_progress);
+        fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
         initListView(view);
         if (isOnCourseOutline) {
             initObserver();
@@ -318,6 +327,8 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
             screenName = bundle.getString(DeepLink.Keys.SCREEN_NAME);
             isVideoMode = savedInstanceState.getBoolean(Router.EXTRA_IS_VIDEOS_MODE);
             isSingleVideoDownload = savedInstanceState.getBoolean("isSingleVideoDownload");
+            fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().
+                    findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
             if (savedInstanceState.containsKey(Router.EXTRA_IS_ON_COURSE_OUTLINE)) {
                 isOnCourseOutline = savedInstanceState.getBoolean(Router.EXTRA_IS_ON_COURSE_OUTLINE);
             } else {
@@ -411,6 +422,13 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 courseManager.addCourseDataInAppLevelCache(courseId, courseComponent);
                 loadData(validateCourseComponent(courseComponent));
                 swipeContainer.setRefreshing(false);
+                if (fullscreenLoader != null && fullscreenLoader.isAdded())
+                    new Timer("", false).schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            fullscreenLoader.dismiss();
+                        }
+                    }, FullscreenLoaderDialogFragment.DELAY);
             }
 
             @Override
@@ -529,7 +547,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 }
             };
             adapter = new CourseOutlineAdapter(getActivity(), courseData, environment, downloadListener,
-                    isVideoMode, isOnCourseOutline);
+                    isVideoMode, isOnCourseOutline, this);
         }
     }
 
@@ -1100,5 +1118,13 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
 
     public boolean canUpdateRowSelection() {
         return true;
+    }
+
+    @Override
+    public void onComplete() {
+        fullscreenLoader.setCancelable(false);
+        fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
+        courseData.setMode(EnrollmentMode.VERIFIED.toString());
+        getCourseComponentFromServer(false);
     }
 }

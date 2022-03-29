@@ -27,9 +27,11 @@ import org.edx.mobile.exception.AuthException
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.http.HttpStatusException
 import org.edx.mobile.http.notifications.FullScreenErrorNotification
+import org.edx.mobile.inapppurchases.CourseUpgradeListener
 import org.edx.mobile.interfaces.RefreshListener
 import org.edx.mobile.logger.Logger
 import org.edx.mobile.model.api.EnrolledCoursesResponse
+import org.edx.mobile.module.analytics.Analytics
 import org.edx.mobile.module.db.DataCallback
 import org.edx.mobile.util.ConfigUtil
 import org.edx.mobile.util.ConfigUtil.Companion.isCourseDiscoveryEnabled
@@ -37,14 +39,16 @@ import org.edx.mobile.util.NetworkUtil
 import org.edx.mobile.util.UiUtils
 import org.edx.mobile.view.adapters.MyCoursesAdapter
 import org.edx.mobile.view.dialog.CourseModalDialogFragment
+import org.edx.mobile.view.dialog.FullscreenLoaderDialogFragment
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
 import javax.inject.Inject
+import kotlin.concurrent.schedule
 
 @AndroidEntryPoint
-class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
+class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, CourseUpgradeListener {
     private lateinit var adapter: MyCoursesAdapter
     private lateinit var binding: FragmentMyCoursesListBinding
     private val logger = Logger(javaClass.simpleName)
@@ -58,6 +62,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     lateinit var loginAPI: LoginAPI
 
     private lateinit var errorNotification: FullScreenErrorNotification
+    private var fullscreenLoader = FullscreenLoaderDialogFragment()
     private lateinit var enrolledCoursesCall: Call<List<EnrolledCoursesResponse>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,6 +92,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                     lastClickTime = currentTime
                     CourseModalDialogFragment.newInstance(
                         environment.config.platformName,
+                        Analytics.Screens.COURSE_ENROLLMENT,
                         courseId,
                         courseName,
                         price,
@@ -192,6 +198,13 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                             showProgress = response.body()?.isEmpty() == true,
                             fromCache = false
                         )
+                    }
+                    if (fullscreenLoader.isAdded) {
+                        Timer("", false).schedule(
+                            FullscreenLoaderDialogFragment.DELAY
+                        ) {
+                            fullscreenLoader.dismiss()
+                        }
                     }
                 } else if (fromCache) { // Fetch latest data from server if cache call's response is unSuccessful
                     loadData(showProgress = true, fromCache = false)
@@ -388,5 +401,11 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
 
     override fun isShowingFullScreenError(): Boolean {
         return errorNotification.isShowing
+    }
+
+    override fun onComplete() {
+        fullscreenLoader.isCancelable = false
+        fullscreenLoader.show(childFragmentManager, null)
+        loadData(showProgress = false, fromCache = false)
     }
 }

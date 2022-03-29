@@ -109,6 +109,13 @@
         <item name="android:textColor">@color/neutralXXDark</item>
     </style>
 
+    <style name="campaign_launch_text" parent="bold_text">
+        <item name="android:textSize">@dimen/fullscreen_message_text_size</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/primaryXLightColor</item>
+        <item name="lineHeight">@dimen/fullscreen_message_line_height</item>
+    </style>
+    
     <style name="account_option" parent="@style/regular_white_text">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/height_drawer_menu</item>

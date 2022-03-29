@@ -327,4 +327,12 @@
     <dimen name="upgrade_now_progress_indicator_thickness">3dp</dimen>
     <dimen name="upgrade_now_button_height">44dp</dimen>
 
+    <!-- Fullscreen loader -->
+    <dimen name="fullscreen_loader">48dp</dimen>
+    <dimen name="fullscreen_loader_margin">32dp</dimen>
+    <dimen name="fullscreen_margin">18dp</dimen>
+    <dimen name="fullscreen_margin_top">36dp</dimen>
+    <dimen name="fullscreen_message_text_size">32sp</dimen>
+    <dimen name="fullscreen_message_line_height">36dp</dimen>
+
 </resources>
