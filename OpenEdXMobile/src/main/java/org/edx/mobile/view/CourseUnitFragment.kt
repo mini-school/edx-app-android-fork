@@ -37,6 +37,10 @@ abstract class CourseUnitFragment : BaseFragment() {
         hasComponentCallback = callback
     }
 
+    fun updateCourseUnit(courseId: String, componentId: String){
+        hasComponentCallback?.refreshCourseData(courseId, componentId)
+    }
+
     /**
      * This method contains the status that screen has the Casting supported video content or not.
      *
@@ -50,5 +54,6 @@ abstract class CourseUnitFragment : BaseFragment() {
         val component: CourseComponent?
         fun navigateNextComponent()
         fun navigatePreviousComponent()
+        fun refreshCourseData(courseId: String, componentId: String)
     }
 }

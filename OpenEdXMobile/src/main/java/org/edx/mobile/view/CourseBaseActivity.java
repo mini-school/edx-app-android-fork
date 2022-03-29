@@ -97,25 +97,35 @@ public abstract class CourseBaseActivity extends BaseFragmentActivity
     }
 
     protected void restore(Bundle savedInstanceState) {
-        blocksApiVersion = config.getApiUrlVersionConfig().getBlocksApiVersion();
-        courseData = (EnrolledCoursesResponse) savedInstanceState.getSerializable(Router.EXTRA_COURSE_DATA);
-        courseUpgradeData = savedInstanceState.getParcelable(Router.EXTRA_COURSE_UPGRADE_DATA);
-        courseComponentId = savedInstanceState.getString(Router.EXTRA_COURSE_COMPONENT_ID);
+        if (savedInstanceState != null) {
+            courseData = (EnrolledCoursesResponse) savedInstanceState.getSerializable(Router.EXTRA_COURSE_DATA);
+            courseUpgradeData = savedInstanceState.getParcelable(Router.EXTRA_COURSE_UPGRADE_DATA);
+            courseComponentId = savedInstanceState.getString(Router.EXTRA_COURSE_COMPONENT_ID);
+        }
 
         if (courseComponentId == null) {
-            final String courseId = courseData.getCourse().getId();
-            getHierarchyCall = courseApi.getCourseStructure(blocksApiVersion, courseId);
-            getHierarchyCall.enqueue(new CourseAPI.GetCourseStructureCallback(this, courseId,
-                    new ProgressViewController(binding.loadingIndicator.loadingIndicator), errorNotification,
-                    null, this) {
-                @Override
-                protected void onResponse(@NonNull final CourseComponent courseComponent) {
-                    courseComponentId = courseComponent.getId();
-                    invalidateOptionsMenu();
-                    onLoadData();
-                }
-            });
+            updateCourseStructure(courseData.getCourse().getId(), null);
         }
+    }
+
+    protected void updateCourseStructure(String courseId, String componentId) {
+        blocksApiVersion = config.getApiUrlVersionConfig().getBlocksApiVersion();
+        getHierarchyCall = courseApi.getCourseStructureWithoutStale(blocksApiVersion, courseId);
+        getHierarchyCall.enqueue(new CourseAPI.GetCourseStructureCallback(this, courseId,
+                new ProgressViewController(binding.loadingIndicator.loadingIndicator), errorNotification,
+                null, this) {
+            @Override
+            protected void onResponse(@NonNull final CourseComponent courseComponent) {
+                if (componentId != null) {
+                    courseManager.addCourseDataInAppLevelCache(courseId, courseComponent);
+                    courseComponentId = componentId;
+                } else {
+                    courseComponentId = courseComponent.getId();
+                }
+                invalidateOptionsMenu();
+                onLoadData();
+            }
+        });
     }
 
     @Override

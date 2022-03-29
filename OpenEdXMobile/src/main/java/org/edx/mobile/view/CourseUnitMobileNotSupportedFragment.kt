@@ -249,10 +249,17 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
             getString(R.string.title_upgrade_complete),
             getString(R.string.upgrade_success_message),
             getString(R.string.label_continue),
+            { _, _ -> navigateToCourseDashboard() },
             null,
             null,
-            null
+            false
         ).show(childFragmentManager, null)
+    }
+
+    private fun navigateToCourseDashboard() {
+        unit?.let {
+            updateCourseUnit(it.courseId, it.id)
+        }
     }
 
     override fun onResume() {
