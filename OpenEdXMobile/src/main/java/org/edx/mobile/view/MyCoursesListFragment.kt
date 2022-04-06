@@ -27,6 +27,7 @@ import org.edx.mobile.exception.AuthException
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.http.HttpStatusException
 import org.edx.mobile.http.notifications.FullScreenErrorNotification
+import org.edx.mobile.http.notifications.SnackbarErrorNotification
 import org.edx.mobile.inapppurchases.CourseUpgradeListener
 import org.edx.mobile.interfaces.RefreshListener
 import org.edx.mobile.logger.Logger
@@ -204,6 +205,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
                             FullscreenLoaderDialogFragment.DELAY
                         ) {
                             fullscreenLoader.dismiss()
+                            SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
                         }
                     }
                 } else if (fromCache) { // Fetch latest data from server if cache call's response is unSuccessful

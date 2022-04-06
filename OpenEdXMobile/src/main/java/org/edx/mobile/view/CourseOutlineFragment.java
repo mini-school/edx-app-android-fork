@@ -427,6 +427,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                         @Override
                         public void run() {
                             fullscreenLoader.dismiss();
+                            new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
                         }
                     }, FullscreenLoaderDialogFragment.DELAY);
             }
