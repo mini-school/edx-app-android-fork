@@ -10,12 +10,18 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import org.edx.mobile.R
 import org.edx.mobile.databinding.DialogFullscreenLoaderBinding
+import org.edx.mobile.util.NonNullObserver
+import org.edx.mobile.viewModel.InAppPurchasesViewModel
 
 class FullscreenLoaderDialogFragment : DialogFragment() {
 
     private lateinit var binding: DialogFullscreenLoaderBinding
+
+    private val iapViewModel: InAppPurchasesViewModel
+            by viewModels(ownerProducer = { requireActivity() })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,8 +29,6 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
             STYLE_NORMAL,
             R.style.AppTheme_NoActionBar
         )
-        // Using deprecate feature as we can't use ViewModel approach with current app structure
-        retainInstance = true
     }
 
     override fun onCreateView(
@@ -35,10 +39,24 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(view: View, args: Bundle?) {
+        super.onViewCreated(view, args)
+        intiViews()
+        initObservers()
+        if (iapViewModel.isExecuted().not()) {
+            iapViewModel.executeOrder()
+        }
+    }
 
+    private fun intiViews() {
         binding.materialTextView.setText(getMessage(), TextView.BufferType.SPANNABLE)
+    }
+
+    private fun initObservers() {
+        iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
+            iapViewModel.refreshCourseData()
+            iapViewModel.reset()
+        })
     }
 
     private fun getMessage(): SpannableStringBuilder {

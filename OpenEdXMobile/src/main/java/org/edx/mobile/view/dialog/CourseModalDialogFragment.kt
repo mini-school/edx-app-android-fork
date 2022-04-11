@@ -18,7 +18,6 @@ import org.edx.mobile.databinding.DialogUpgradeFeaturesBinding
 import org.edx.mobile.extenstion.setVisibility
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.inapppurchases.BillingProcessor
-import org.edx.mobile.inapppurchases.CourseUpgradeListener
 import org.edx.mobile.inapppurchases.ProductManager
 import org.edx.mobile.util.AppConstants
 import org.edx.mobile.util.InAppPurchasesException
@@ -35,10 +34,11 @@ class CourseModalDialogFragment : DialogFragment() {
     private var courseId: String = ""
     private var price: String = ""
     private var isSelfPaced: Boolean = false
-    private lateinit var courseUpgradeListener: CourseUpgradeListener
 
     private var billingProcessor: BillingProcessor? = null
-    private val iapViewModel: InAppPurchasesViewModel by viewModels()
+
+    private val iapViewModel: InAppPurchasesViewModel
+            by viewModels(ownerProducer = { requireActivity() })
 
     @Inject
     lateinit var environment: IEdxEnvironment
@@ -49,7 +49,6 @@ class CourseModalDialogFragment : DialogFragment() {
             STYLE_NORMAL,
             R.style.AppTheme_NoActionBar
         )
-        courseUpgradeListener = parentFragment as CourseUpgradeListener
     }
 
     override fun onCreateView(
@@ -140,19 +139,28 @@ class CourseModalDialogFragment : DialogFragment() {
     }
 
     private fun initializeProductPrice() {
+        if (iapViewModel.price.isEmpty().not()) {
+            binding.layoutUpgradeBtn.btnUpgrade.text = iapViewModel.price
+            binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
+                binding.layoutUpgradeBtn.shimmerViewContainer.hideShimmer()
+                binding.layoutUpgradeBtn.btnUpgrade.isEnabled = true
+            }, 500)
+            return
+        }
         ProductManager.getProductByCourseId(courseId)?.let {
             billingProcessor?.querySyncDetails(
                 productId = it
             ) { _, skuDetails ->
                 val skuDetail = skuDetails?.get(0)
                 if (skuDetail?.sku == it) {
-                    binding.layoutUpgradeBtn.btnUpgrade.text =
-                        ResourceUtil.getFormattedString(
-                            resources,
-                            R.string.label_upgrade_course_button,
-                            AppConstants.PRICE,
-                            skuDetail.price
-                        ).toString()
+                    val price = ResourceUtil.getFormattedString(
+                        resources,
+                        R.string.label_upgrade_course_button,
+                        AppConstants.PRICE,
+                        skuDetail.price
+                    ).toString()
+                    binding.layoutUpgradeBtn.btnUpgrade.text = price
+                    iapViewModel.price = price
                     // The app get the sku details instantly, so add some wait to perform
                     // animation at least one cycle.
                     binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
@@ -176,9 +184,11 @@ class CourseModalDialogFragment : DialogFragment() {
                 purchaseProduct(iapViewModel.getProductId())
         })
 
-        iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
-            dismiss()
-            courseUpgradeListener.onComplete()
+        iapViewModel.completeProcess.observe(viewLifecycleOwner, NonNullObserver {
+            if (it) {
+                dismiss()
+                iapViewModel.reset()
+            }
         })
 
         iapViewModel.errorMessage.observe(viewLifecycleOwner, NonNullObserver { errorMsg ->
@@ -212,12 +222,9 @@ class CourseModalDialogFragment : DialogFragment() {
 
     private fun onProductPurchased(purchaseToken: String) {
         lifecycleScope.launch {
-            executeOrder(purchaseToken)
+            iapViewModel.setPurchaseToken(purchaseToken)
+            iapViewModel.showFullScreenLoader()
         }
-    }
-
-    private fun executeOrder(purchaseToken: String) {
-        iapViewModel.executeOrder(purchaseToken = purchaseToken)
     }
 
     private fun showUpgradeErrorDialog(

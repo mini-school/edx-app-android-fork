@@ -229,7 +229,7 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
     }
 
     private fun executeOrder(purchaseToken: String) {
-        iapViewModel.executeOrder(purchaseToken = purchaseToken)
+        iapViewModel.executeOrder()
     }
 
     private fun showUpgradeErrorDialog(

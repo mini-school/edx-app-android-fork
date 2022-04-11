@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import de.greenrobot.event.EventBus
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -28,7 +29,6 @@ import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.http.HttpStatusException
 import org.edx.mobile.http.notifications.FullScreenErrorNotification
 import org.edx.mobile.http.notifications.SnackbarErrorNotification
-import org.edx.mobile.inapppurchases.CourseUpgradeListener
 import org.edx.mobile.interfaces.RefreshListener
 import org.edx.mobile.logger.Logger
 import org.edx.mobile.model.api.EnrolledCoursesResponse
@@ -37,10 +37,12 @@ import org.edx.mobile.module.db.DataCallback
 import org.edx.mobile.util.ConfigUtil
 import org.edx.mobile.util.ConfigUtil.Companion.isCourseDiscoveryEnabled
 import org.edx.mobile.util.NetworkUtil
+import org.edx.mobile.util.NonNullObserver
 import org.edx.mobile.util.UiUtils
 import org.edx.mobile.view.adapters.MyCoursesAdapter
 import org.edx.mobile.view.dialog.CourseModalDialogFragment
 import org.edx.mobile.view.dialog.FullscreenLoaderDialogFragment
+import org.edx.mobile.viewModel.InAppPurchasesViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -49,7 +51,7 @@ import javax.inject.Inject
 import kotlin.concurrent.schedule
 
 @AndroidEntryPoint
-class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, CourseUpgradeListener {
+class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     private lateinit var adapter: MyCoursesAdapter
     private lateinit var binding: FragmentMyCoursesListBinding
     private val logger = Logger(javaClass.simpleName)
@@ -62,8 +64,11 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
     @Inject
     lateinit var loginAPI: LoginAPI
 
+    private val iapViewModel: InAppPurchasesViewModel
+            by viewModels(ownerProducer = { requireActivity() })
+
     private lateinit var errorNotification: FullScreenErrorNotification
-    private var fullscreenLoader = FullscreenLoaderDialogFragment()
+    private lateinit var fullscreenLoader: FullscreenLoaderDialogFragment
     private lateinit var enrolledCoursesCall: Call<List<EnrolledCoursesResponse>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +135,12 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initObservers()
+        fullscreenLoader = try {
+            childFragmentManager.findFragmentByTag(FullscreenLoaderDialogFragment.TAG) as FullscreenLoaderDialogFragment
+        } catch (e: Exception) {
+            FullscreenLoaderDialogFragment.newInstance()
+        }
         ConfigUtil.checkValuePropEnabled(
             environment.config,
             object : ConfigUtil.OnValuePropStatusListener {
@@ -142,6 +153,31 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
                 }
             })
         loadData(showProgress = true, fromCache = true)
+    }
+
+    private fun initObservers() {
+        iapViewModel.displayFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
+            if (it) {
+                iapViewModel.reset()
+                fullscreenLoader.isCancelable = false
+                fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
+            }
+        })
+
+        iapViewModel.refreshCourseData.observe(viewLifecycleOwner, NonNullObserver {
+            if (it) {
+                loadData(showProgress = false, fromCache = false)
+                iapViewModel.reset()
+            }
+        })
+
+        iapViewModel.completeProcess.observe(viewLifecycleOwner, NonNullObserver {
+            if (it) {
+                fullscreenLoader.dismiss()
+                SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
+                iapViewModel.reset()
+            }
+        })
     }
 
     private val dataCallback: DataCallback<Int> = object : DataCallback<Int>() {
@@ -199,13 +235,11 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
                             showProgress = response.body()?.isEmpty() == true,
                             fromCache = false
                         )
-                    }
-                    if (fullscreenLoader.isAdded) {
+                    } else if (fullscreenLoader.isAdded) {
                         Timer("", false).schedule(
                             FullscreenLoaderDialogFragment.DELAY
                         ) {
-                            fullscreenLoader.dismiss()
-                            SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
+                            iapViewModel.processComplete()
                         }
                     }
                 } else if (fromCache) { // Fetch latest data from server if cache call's response is unSuccessful
@@ -403,11 +437,5 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener, Cou
 
     override fun isShowingFullScreenError(): Boolean {
         return errorNotification.isShowing
-    }
-
-    override fun onComplete() {
-        fullscreenLoader.isCancelable = false
-        fullscreenLoader.show(childFragmentManager, null)
-        loadData(showProgress = false, fromCache = false)
     }
 }

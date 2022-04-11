@@ -12,10 +12,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -25,7 +25,6 @@ import com.google.android.material.textview.MaterialTextView;
 
 import org.edx.mobile.R;
 import org.edx.mobile.core.IEdxEnvironment;
-import org.edx.mobile.inapppurchases.CourseUpgradeListener;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.api.AuthorizationDenialReason;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
@@ -87,12 +86,11 @@ public class CourseOutlineAdapter extends BaseAdapter {
     private IStorage storage;
     private EnrolledCoursesResponse courseData;
     private DownloadListener downloadListener;
-    private CourseUpgradeListener courseUpgradeListener;
     private boolean isVideoMode;
 
     public CourseOutlineAdapter(final Context context, final EnrolledCoursesResponse courseData,
                                 final IEdxEnvironment environment, DownloadListener listener,
-                                boolean isVideoMode, boolean isOnCourseOutline, CourseUpgradeListener courseUpgradeListener) {
+                                boolean isVideoMode, boolean isOnCourseOutline) {
         this.context = context;
         this.environment = environment;
         this.config = environment.getConfig();
@@ -101,7 +99,6 @@ public class CourseOutlineAdapter extends BaseAdapter {
         this.courseData = courseData;
         this.downloadListener = listener;
         this.isVideoMode = isVideoMode;
-        this.courseUpgradeListener = courseUpgradeListener;
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         adapterData = new ArrayList();
         if (isOnCourseOutline && !isVideoMode) {
@@ -641,7 +638,7 @@ public class CourseOutlineAdapter extends BaseAdapter {
                 courseData.getCourse().getName(),
                 courseData.getCourse().getPrice(),
                 courseData.getCourse().isSelfPaced())
-                .show(((Fragment) courseUpgradeListener).getChildFragmentManager(),
+                .show(((AppCompatActivity) context).getSupportFragmentManager(),
                         CourseModalDialogFragment.TAG));
         upgradeBtnText.setText(R.string.value_prop_course_card_message);
 

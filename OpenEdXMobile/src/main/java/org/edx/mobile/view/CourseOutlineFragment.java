@@ -54,7 +54,6 @@ import org.edx.mobile.http.HttpStatusException;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.http.notifications.FullScreenErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
-import org.edx.mobile.inapppurchases.CourseUpgradeListener;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.loader.AsyncTaskResult;
 import org.edx.mobile.loader.CourseOutlineAsyncLoader;
@@ -108,8 +107,7 @@ import retrofit2.Response;
 @AndroidEntryPoint
 public class CourseOutlineFragment extends OfflineSupportBaseFragment
         implements RefreshListener, VideoDownloadHelper.DownloadManagerCallback,
-        LoaderManager.LoaderCallbacks<AsyncTaskResult<CourseComponent>>, BaseFragment.PermissionListener,
-        CourseUpgradeListener {
+        LoaderManager.LoaderCallbacks<AsyncTaskResult<CourseComponent>>, BaseFragment.PermissionListener {
     private final Logger logger = new Logger(getClass().getName());
     private static final int AUTOSCROLL_DELAY_MS = 500;
     private static final int SNACKBAR_SHOWTIME_MS = 5000;
@@ -548,7 +546,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 }
             };
             adapter = new CourseOutlineAdapter(getActivity(), courseData, environment, downloadListener,
-                    isVideoMode, isOnCourseOutline, this);
+                    isVideoMode, isOnCourseOutline);
         }
     }
 
@@ -1121,7 +1119,6 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         return true;
     }
 
-    @Override
     public void onComplete() {
         fullscreenLoader.setCancelable(false);
         fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);

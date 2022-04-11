@@ -23,8 +23,8 @@ class InAppPurchasesViewModel @Inject constructor(
     private val _showLoader = MutableLiveData<Boolean>()
     val showLoader: LiveData<Boolean> = _showLoader
 
-    private val _errorMessage = MutableLiveData<ErrorMessage>()
-    val errorMessage: LiveData<ErrorMessage> = _errorMessage
+    private val _errorMessage = MutableLiveData<ErrorMessage?>()
+    val errorMessage: LiveData<ErrorMessage?> = _errorMessage
 
     private val _checkoutResponse = MutableLiveData<CheckoutResponse>()
     val checkoutResponse: LiveData<CheckoutResponse> = _checkoutResponse
@@ -32,8 +32,22 @@ class InAppPurchasesViewModel @Inject constructor(
     private val _executeOrderResponse = MutableLiveData<ExecuteOrderResponse>()
     val executeOrderResponse: LiveData<ExecuteOrderResponse> = _executeOrderResponse
 
+    private val _displayFullscreenLoaderDialog = MutableLiveData<Boolean>()
+    val displayFullscreenLoaderDialog = _displayFullscreenLoaderDialog
+
+    private val _refreshCourseData = MutableLiveData<Boolean>()
+    val refreshCourseData = _refreshCourseData
+
+    private val _completeProcess = MutableLiveData<Boolean>()
+    val completeProcess = _completeProcess
+
+    var price: String = ""
     private var productId: String = ""
     private var basketId: Long = 0
+    private var purchaseToken: String = ""
+
+    private var isExecuted: Boolean = false
+    fun isExecuted(): Boolean = isExecuted
 
     fun getProductId() = productId
 
@@ -82,7 +96,7 @@ class InAppPurchasesViewModel @Inject constructor(
             })
     }
 
-    fun executeOrder(purchaseToken: String) {
+    fun executeOrder() {
         repository.executeOrder(
             basketId = basketId,
             productId = productId,
@@ -133,5 +147,27 @@ class InAppPurchasesViewModel @Inject constructor(
         }
     } else {
         R.string.general_error_message
+    }
+
+    fun setPurchaseToken(purchaseToken: String) {
+        this.purchaseToken = purchaseToken
+    }
+
+    fun showFullScreenLoader() {
+        _displayFullscreenLoaderDialog.postValue(true)
+    }
+
+    fun refreshCourseData() {
+        _refreshCourseData.postValue(true)
+    }
+
+    fun processComplete() {
+        _completeProcess.postValue(true)
+        isExecuted = false
+    }
+
+    fun reset() {
+        _displayFullscreenLoaderDialog.value = false
+        _refreshCourseData.value = false
     }
 }
