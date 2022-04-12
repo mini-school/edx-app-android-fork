@@ -89,6 +89,7 @@ import org.edx.mobile.view.dialog.AlertDialogFragment;
 import org.edx.mobile.view.dialog.FullscreenLoaderDialogFragment;
 import org.edx.mobile.view.dialog.VideoDownloadQualityDialogFragment;
 import org.edx.mobile.viewModel.CourseDateViewModel;
+import org.edx.mobile.viewModel.InAppPurchasesViewModel;
 
 import java.util.HashMap;
 import java.util.List;
@@ -141,6 +142,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     VideoDownloadHelper downloadManager;
 
     private CourseDateViewModel courseDateViewModel;
+    private InAppPurchasesViewModel iapViewModel;
 
     private View loadingIndicator;
     private FrameLayout flBulkDownload;
@@ -205,8 +207,11 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         calendarTitle = CalendarUtils.getCourseCalendarTitle(environment, courseData.getCourse().getName());
         accountName = CalendarUtils.getUserAccountForSync(environment);
         loaderDialog = AlertDialogFragment.newInstance(R.string.title_syncing_calendar, R.layout.alert_dialog_progress);
-        fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
         initListView(view);
+        fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
+        if (fullscreenLoader == null) {
+            fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
+        }
         if (isOnCourseOutline) {
             initObserver();
         }
@@ -226,6 +231,8 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
 
     private void initObserver() {
         courseDateViewModel = new ViewModelProvider(this).get(CourseDateViewModel.class);
+
+        iapViewModel = new ViewModelProvider(requireActivity()).get(InAppPurchasesViewModel.class);
 
         courseDateViewModel.getSyncLoader().observe(getViewLifecycleOwner(), showLoader -> {
             if (showLoader) {
@@ -284,6 +291,30 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 }
             }
         });
+
+        iapViewModel.getDisplayFullscreenLoaderDialog().observe(getViewLifecycleOwner(), value -> {
+            if (value != null && value) {
+                fullscreenLoader.setCancelable(false);
+                fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
+                iapViewModel.fullScreenLoaderShown();
+            }
+        });
+
+        iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), value -> {
+            if (value != null && value) {
+                courseData.setMode(EnrollmentMode.VERIFIED.toString());
+                getCourseComponentFromServer(false);
+                iapViewModel.courseRefreshed();
+            }
+        });
+
+        iapViewModel.getProcessComplete().observe(getViewLifecycleOwner(), value -> {
+            if (value != null && value) {
+                fullscreenLoader.dismiss();
+                new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
+                iapViewModel.reset();
+            }
+        });
     }
 
     private void showCalendarOutOfDateDialog(Long calendarId) {
@@ -325,8 +356,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
             screenName = bundle.getString(DeepLink.Keys.SCREEN_NAME);
             isVideoMode = savedInstanceState.getBoolean(Router.EXTRA_IS_VIDEOS_MODE);
             isSingleVideoDownload = savedInstanceState.getBoolean("isSingleVideoDownload");
-            fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().
-                    findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
+
             if (savedInstanceState.containsKey(Router.EXTRA_IS_ON_COURSE_OUTLINE)) {
                 isOnCourseOutline = savedInstanceState.getBoolean(Router.EXTRA_IS_ON_COURSE_OUTLINE);
             } else {
@@ -424,8 +454,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                     new Timer("", false).schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            fullscreenLoader.dismiss();
-                            new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
+                            iapViewModel.processComplete();
                         }
                     }, FullscreenLoaderDialogFragment.DELAY);
             }
@@ -1117,12 +1146,5 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
 
     public boolean canUpdateRowSelection() {
         return true;
-    }
-
-    public void onComplete() {
-        fullscreenLoader.setCancelable(false);
-        fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
-        courseData.setMode(EnrollmentMode.VERIFIED.toString());
-        getCourseComponentFromServer(false);
     }
 }

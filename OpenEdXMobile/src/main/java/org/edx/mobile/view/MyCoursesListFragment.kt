@@ -25,6 +25,7 @@ import org.edx.mobile.event.MainDashboardRefreshEvent
 import org.edx.mobile.event.MoveToDiscoveryTabEvent
 import org.edx.mobile.event.NetworkConnectivityChangeEvent
 import org.edx.mobile.exception.AuthException
+import org.edx.mobile.exception.ErrorMessage
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.http.HttpStatusException
 import org.edx.mobile.http.notifications.FullScreenErrorNotification
@@ -56,6 +57,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     private lateinit var binding: FragmentMyCoursesListBinding
     private val logger = Logger(javaClass.simpleName)
     private var refreshOnResume = false
+    private var refreshOnCache = false
     private var lastClickTime: Long = 0
 
     @Inject
@@ -135,12 +137,12 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initObservers()
         fullscreenLoader = try {
             childFragmentManager.findFragmentByTag(FullscreenLoaderDialogFragment.TAG) as FullscreenLoaderDialogFragment
         } catch (e: Exception) {
             FullscreenLoaderDialogFragment.newInstance()
         }
+        initObservers()
         ConfigUtil.checkValuePropEnabled(
             environment.config,
             object : ConfigUtil.OnValuePropStatusListener {
@@ -158,20 +160,22 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     private fun initObservers() {
         iapViewModel.displayFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
-                iapViewModel.reset()
                 fullscreenLoader.isCancelable = false
+                fullscreenLoader.isCancelable = true
                 fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
+                iapViewModel.fullScreenLoaderShown()
             }
         })
 
         iapViewModel.refreshCourseData.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
+                refreshOnCache = true
                 loadData(showProgress = false, fromCache = false)
-                iapViewModel.reset()
+                iapViewModel.courseRefreshed()
             }
         })
 
-        iapViewModel.completeProcess.observe(viewLifecycleOwner, NonNullObserver {
+        iapViewModel.processComplete.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
                 fullscreenLoader.dismiss()
                 SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
@@ -235,10 +239,11 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                             showProgress = response.body()?.isEmpty() == true,
                             fromCache = false
                         )
-                    } else if (fullscreenLoader.isAdded) {
+                    } else if (fullscreenLoader.isAdded && refreshOnCache) {
                         Timer("", false).schedule(
                             FullscreenLoaderDialogFragment.DELAY
                         ) {
+                            refreshOnCache = false
                             iapViewModel.processComplete()
                         }
                     }
@@ -287,6 +292,9 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             }
 
             override fun onFailure(call: Call<List<EnrolledCoursesResponse>>, t: Throwable) {
+                if (fullscreenLoader.isAdded) {
+                    iapViewModel.setError(ErrorMessage.EXECUTE_ORDER_CODE, t)
+                }
                 when {
                     call.isCanceled -> logger.error(t)
                     fromCache -> loadData(showProgress = true, fromCache = false)

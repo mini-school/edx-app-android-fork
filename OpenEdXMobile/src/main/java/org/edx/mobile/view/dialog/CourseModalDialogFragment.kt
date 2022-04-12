@@ -184,10 +184,9 @@ class CourseModalDialogFragment : DialogFragment() {
                 purchaseProduct(iapViewModel.getProductId())
         })
 
-        iapViewModel.completeProcess.observe(viewLifecycleOwner, NonNullObserver {
+        iapViewModel.orderComplete.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
                 dismiss()
-                iapViewModel.reset()
             }
         })
 

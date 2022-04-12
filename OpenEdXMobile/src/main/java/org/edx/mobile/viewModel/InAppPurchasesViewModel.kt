@@ -20,7 +20,7 @@ class InAppPurchasesViewModel @Inject constructor(
     private val repository: InAppPurchasesRepository
 ) : ViewModel() {
 
-    private val _showLoader = MutableLiveData<Boolean>()
+    private val _showLoader = MutableLiveData(false)
     val showLoader: LiveData<Boolean> = _showLoader
 
     private val _errorMessage = MutableLiveData<ErrorMessage?>()
@@ -32,14 +32,20 @@ class InAppPurchasesViewModel @Inject constructor(
     private val _executeOrderResponse = MutableLiveData<ExecuteOrderResponse>()
     val executeOrderResponse: LiveData<ExecuteOrderResponse> = _executeOrderResponse
 
-    private val _displayFullscreenLoaderDialog = MutableLiveData<Boolean>()
+    private val _displayFullscreenLoaderDialog = MutableLiveData(false)
     val displayFullscreenLoaderDialog = _displayFullscreenLoaderDialog
 
-    private val _refreshCourseData = MutableLiveData<Boolean>()
+    private val _dismissFullscreenLoader = MutableLiveData(false)
+    val dismissFullscreenLoader: LiveData<Boolean> = _dismissFullscreenLoader
+
+    private val _refreshCourseData = MutableLiveData(false)
     val refreshCourseData = _refreshCourseData
 
-    private val _completeProcess = MutableLiveData<Boolean>()
-    val completeProcess = _completeProcess
+    private val _orderComplete = MutableLiveData(false)
+    val orderComplete: LiveData<Boolean> = _orderComplete
+
+    private val _processComplete = MutableLiveData(false)
+    val processComplete: LiveData<Boolean> = _processComplete
 
     var price: String = ""
     private var productId: String = ""
@@ -106,6 +112,7 @@ class InAppPurchasesViewModel @Inject constructor(
                     result.data?.let {
                         _executeOrderResponse.value = it
                         orderExecuted()
+                        refreshCourseData()
                     }
                     endLoading()
                 }
@@ -126,8 +133,10 @@ class InAppPurchasesViewModel @Inject constructor(
     }
 
     private fun orderExecuted() {
-        this.productId = ""
-        this.basketId = 0
+        productId = ""
+        basketId = 0
+        isExecuted = true
+        _orderComplete.value = true
     }
 
     private fun getErrorMessage(throwable: Throwable) = if (throwable is InAppPurchasesException) {
@@ -157,17 +166,32 @@ class InAppPurchasesViewModel @Inject constructor(
         _displayFullscreenLoaderDialog.postValue(true)
     }
 
-    fun refreshCourseData() {
+    fun fullScreenLoaderShown() {
+        _displayFullscreenLoaderDialog.value = false
+    }
+
+    private fun refreshCourseData() {
         _refreshCourseData.postValue(true)
     }
 
-    fun processComplete() {
-        _completeProcess.postValue(true)
+    fun reset() {
         isExecuted = false
+        _orderComplete.value = false
+        _displayFullscreenLoaderDialog.value = false
+        _dismissFullscreenLoader.value = false
+        _processComplete.value = false
+        _dismissFullscreenLoader.value = false
     }
 
-    fun reset() {
-        _displayFullscreenLoaderDialog.value = false
+    fun courseRefreshed() {
         _refreshCourseData.value = false
+    }
+
+    fun processComplete() {
+        _processComplete.postValue(true)
+    }
+
+    fun dismissModals() {
+        _dismissFullscreenLoader.value = true
     }
 }

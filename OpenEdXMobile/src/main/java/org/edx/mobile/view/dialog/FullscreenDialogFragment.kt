@@ -8,15 +8,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import dagger.hilt.android.AndroidEntryPoint
 import org.edx.mobile.R
+import org.edx.mobile.core.IEdxEnvironment
 import org.edx.mobile.databinding.DialogFullscreenLoaderBinding
+import org.edx.mobile.http.HttpStatus
+import org.edx.mobile.util.InAppPurchasesException
 import org.edx.mobile.util.NonNullObserver
 import org.edx.mobile.viewModel.InAppPurchasesViewModel
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class FullscreenLoaderDialogFragment : DialogFragment() {
+
+    @Inject
+    lateinit var environment: IEdxEnvironment
 
     private lateinit var binding: DialogFullscreenLoaderBinding
 
@@ -53,10 +63,51 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
     }
 
     private fun initObservers() {
-        iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
-            iapViewModel.refreshCourseData()
-            iapViewModel.reset()
+        iapViewModel.errorMessage.observe(viewLifecycleOwner, NonNullObserver { errorMsg ->
+            if (errorMsg.throwable is InAppPurchasesException) {
+                when (errorMsg.throwable.httpErrorCode) {
+                    HttpStatus.UNAUTHORIZED -> {
+                        environment.router?.forceLogout(
+                            requireContext(),
+                            environment.analyticsRegistry,
+                            environment.notificationDelegate
+                        )
+                        return@NonNullObserver
+                    }
+                    else -> showUpgradeErrorDialog(errorMsg.errorResId)
+                }
+            } else {
+                showUpgradeErrorDialog(errorMsg.errorResId)
+            }
+            iapViewModel.errorMessageShown()
         })
+
+        iapViewModel.dismissFullscreenLoader.observe(viewLifecycleOwner, NonNullObserver {
+            if (it) {
+                iapViewModel.reset()
+                dismiss()
+            }
+        })
+    }
+
+    private fun showUpgradeErrorDialog(
+        @StringRes errorResId: Int = R.string.general_error_message
+    ) {
+        AlertDialogFragment.newInstance(
+            getString(R.string.title_upgrade_error),
+            getString(errorResId),
+            getString(R.string.label_close),
+            { _, _ ->
+                iapViewModel.dismissModals()
+            },
+            getString(R.string.label_get_help),
+            { _, _ ->
+                environment.router?.showFeedbackScreen(
+                    requireActivity(),
+                    getString(R.string.email_subject_upgrade_error)
+                )
+                iapViewModel.dismissModals()
+            }).show(childFragmentManager, null)
     }
 
     private fun getMessage(): SpannableStringBuilder {
