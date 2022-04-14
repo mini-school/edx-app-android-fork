@@ -26,8 +26,6 @@
             style="@style/campaign_launch_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -40,11 +38,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/fullscreen_loader"
-            android:src="@drawable/ic_campaign_launch"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@id/materialTextView"
             app:layout_constraintStart_toStartOf="@id/materialTextView"
             app:layout_constraintTop_toBottomOf="@+id/materialTextView"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintVertical_bias="0.0"
+            app:srcCompat="@drawable/ic_campaign_launch" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

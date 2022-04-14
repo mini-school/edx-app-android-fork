@@ -208,13 +208,12 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         accountName = CalendarUtils.getUserAccountForSync(environment);
         loaderDialog = AlertDialogFragment.newInstance(R.string.title_syncing_calendar, R.layout.alert_dialog_progress);
         initListView(view);
-        fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
-        if (fullscreenLoader == null) {
-            fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
-        }
+
         if (isOnCourseOutline) {
-            initObserver();
+            initCourseDateObserver();
+            initInAppPurchaseSetup();
         }
+
         fetchCourseComponent();
         // Track CourseOutline for A/A test
         trackAATestCourseOutline();
@@ -229,10 +228,8 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         updateRowSelection(getArguments().getString(Router.EXTRA_LAST_ACCESSED_ID));
     }
 
-    private void initObserver() {
+    private void initCourseDateObserver() {
         courseDateViewModel = new ViewModelProvider(this).get(CourseDateViewModel.class);
-
-        iapViewModel = new ViewModelProvider(requireActivity()).get(InAppPurchasesViewModel.class);
 
         courseDateViewModel.getSyncLoader().observe(getViewLifecycleOwner(), showLoader -> {
             if (showLoader) {
@@ -291,17 +288,34 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 }
             }
         });
+    }
+
+    private void initInAppPurchaseSetup() {
+        if (courseData.getMode().equalsIgnoreCase(EnrollmentMode.AUDIT.toString()) && !isVideoMode) {
+            initInAppPurchaseView();
+            initInAppPurchaseObserver();
+        }
+    }
+
+    private void initInAppPurchaseView() {
+        this.fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
+        if (this.fullscreenLoader == null) {
+            this.fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
+        }
+    }
+
+    private void initInAppPurchaseObserver() {
+        iapViewModel = new ViewModelProvider(requireActivity()).get(InAppPurchasesViewModel.class);
 
         iapViewModel.getDisplayFullscreenLoaderDialog().observe(getViewLifecycleOwner(), value -> {
-            if (value != null && value) {
-                fullscreenLoader.setCancelable(false);
+            if (value) {
                 fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
                 iapViewModel.fullScreenLoaderShown();
             }
         });
 
         iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), value -> {
-            if (value != null && value) {
+            if (value) {
                 courseData.setMode(EnrollmentMode.VERIFIED.toString());
                 getCourseComponentFromServer(false);
                 iapViewModel.courseRefreshed();
@@ -309,7 +323,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         });
 
         iapViewModel.getProcessComplete().observe(getViewLifecycleOwner(), value -> {
-            if (value != null && value) {
+            if (value) {
                 fullscreenLoader.dismiss();
                 new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
                 iapViewModel.reset();
@@ -356,7 +370,6 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
             screenName = bundle.getString(DeepLink.Keys.SCREEN_NAME);
             isVideoMode = savedInstanceState.getBoolean(Router.EXTRA_IS_VIDEOS_MODE);
             isSingleVideoDownload = savedInstanceState.getBoolean("isSingleVideoDownload");
-
             if (savedInstanceState.containsKey(Router.EXTRA_IS_ON_COURSE_OUTLINE)) {
                 isOnCourseOutline = savedInstanceState.getBoolean(Router.EXTRA_IS_ON_COURSE_OUTLINE);
             } else {
@@ -456,7 +469,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                         public void run() {
                             iapViewModel.processComplete();
                         }
-                    }, FullscreenLoaderDialogFragment.DELAY);
+                    }, FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY);
             }
 
             @Override

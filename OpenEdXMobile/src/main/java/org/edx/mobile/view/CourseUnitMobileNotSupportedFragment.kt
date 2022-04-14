@@ -186,7 +186,7 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
 
         iapViewModel.checkoutResponse.observe(viewLifecycleOwner, NonNullObserver {
             if (it.paymentPageUrl.isNotEmpty())
-                purchaseProduct(iapViewModel.getProductId())
+                purchaseProduct(iapViewModel.productId)
         })
 
         iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
@@ -229,6 +229,7 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
     }
 
     private fun executeOrder(purchaseToken: String) {
+        iapViewModel.setPurchaseToken(purchaseToken)
         iapViewModel.executeOrder()
     }
 

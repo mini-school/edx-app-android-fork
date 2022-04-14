@@ -46,6 +46,7 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
         savedInstanceState: Bundle?,
     ): View {
         binding = DialogFullscreenLoaderBinding.inflate(inflater)
+        isCancelable = false
         return binding.root
     }
 
@@ -53,13 +54,13 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
         super.onViewCreated(view, args)
         intiViews()
         initObservers()
-        if (iapViewModel.isExecuted().not()) {
+        if (iapViewModel.isVerificationPending) {
             iapViewModel.executeOrder()
         }
     }
 
     private fun intiViews() {
-        binding.materialTextView.setText(getMessage(), TextView.BufferType.SPANNABLE)
+        binding.materialTextView.setText(getTitle(), TextView.BufferType.SPANNABLE)
     }
 
     private fun initObservers() {
@@ -81,13 +82,6 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
             }
             iapViewModel.errorMessageShown()
         })
-
-        iapViewModel.dismissFullscreenLoader.observe(viewLifecycleOwner, NonNullObserver {
-            if (it) {
-                iapViewModel.reset()
-                dismiss()
-            }
-        })
     }
 
     private fun showUpgradeErrorDialog(
@@ -97,20 +91,18 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
             getString(R.string.title_upgrade_error),
             getString(errorResId),
             getString(R.string.label_close),
-            { _, _ ->
-                iapViewModel.dismissModals()
-            },
+            { _, _ -> resetPurchase() },
             getString(R.string.label_get_help),
             { _, _ ->
                 environment.router?.showFeedbackScreen(
                     requireActivity(),
                     getString(R.string.email_subject_upgrade_error)
                 )
-                iapViewModel.dismissModals()
+                resetPurchase()
             }).show(childFragmentManager, null)
     }
 
-    private fun getMessage(): SpannableStringBuilder {
+    private fun getTitle(): SpannableStringBuilder {
         val unlocking = getString(R.string.fullscreen_loader_unlocking)
         val fullAccess = getString(R.string.fullscreen_loader_full_access)
         val toYourCourse = getString(R.string.fullscreen_loader_to_your_course)
@@ -127,9 +119,14 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
         return spannable
     }
 
+    private fun resetPurchase() {
+        iapViewModel.reset()
+        dismiss()
+    }
+
     companion object {
         const val TAG = "FULLSCREEN_LOADER"
-        const val DELAY: Long = 3_000
+        const val FULLSCREEN_DISPLAY_DELAY: Long = 3_000
 
         @JvmStatic
         fun newInstance(): FullscreenLoaderDialogFragment {

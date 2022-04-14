@@ -137,12 +137,12 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initObservers()
         fullscreenLoader = try {
             childFragmentManager.findFragmentByTag(FullscreenLoaderDialogFragment.TAG) as FullscreenLoaderDialogFragment
         } catch (e: Exception) {
             FullscreenLoaderDialogFragment.newInstance()
         }
-        initObservers()
         ConfigUtil.checkValuePropEnabled(
             environment.config,
             object : ConfigUtil.OnValuePropStatusListener {
@@ -160,8 +160,6 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     private fun initObservers() {
         iapViewModel.displayFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
-                fullscreenLoader.isCancelable = false
-                fullscreenLoader.isCancelable = true
                 fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
                 iapViewModel.fullScreenLoaderShown()
             }
@@ -239,9 +237,9 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                             showProgress = response.body()?.isEmpty() == true,
                             fromCache = false
                         )
-                    } else if (fullscreenLoader.isAdded && refreshOnCache) {
+                    } else if (refreshOnCache && fullscreenLoader.isAdded) {
                         Timer("", false).schedule(
-                            FullscreenLoaderDialogFragment.DELAY
+                            FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY
                         ) {
                             refreshOnCache = false
                             iapViewModel.processComplete()
@@ -292,12 +290,13 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             }
 
             override fun onFailure(call: Call<List<EnrolledCoursesResponse>>, t: Throwable) {
-                if (fullscreenLoader.isAdded) {
-                    iapViewModel.setError(ErrorMessage.EXECUTE_ORDER_CODE, t)
-                }
                 when {
                     call.isCanceled -> logger.error(t)
                     fromCache -> loadData(showProgress = true, fromCache = false)
+                    fullscreenLoader.isAdded -> iapViewModel.setError(
+                        ErrorMessage.EXECUTE_ORDER_CODE,
+                        t
+                    )
                     else -> {
                         if (t is AuthException || (t is HttpStatusException && t.statusCode == HttpStatus.UNAUTHORIZED)) {
                             environment.router?.forceLogout(

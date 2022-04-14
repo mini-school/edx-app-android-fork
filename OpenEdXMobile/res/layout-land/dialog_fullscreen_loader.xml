@@ -26,8 +26,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/fullscreen_loader_margin"
             android:layout_marginEnd="@dimen/fullscreen_margin"
-            android:gravity="center"
-            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="@+id/appCompatImageView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/appCompatImageView"
@@ -41,9 +39,9 @@
             android:layout_marginStart="@dimen/fullscreen_margin"
             android:layout_marginTop="@dimen/fullscreen_margin"
             android:layout_marginEnd="@dimen/fullscreen_loader_margin"
-            android:src="@drawable/ic_campaign_launch"
             app:layout_constraintEnd_toStartOf="@+id/materialTextView"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/loading_indicator" />
+            app:layout_constraintTop_toBottomOf="@+id/loading_indicator"
+            app:srcCompat="@drawable/ic_campaign_launch" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

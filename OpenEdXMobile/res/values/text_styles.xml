@@ -113,6 +113,7 @@
         <item name="android:textSize">@dimen/fullscreen_message_text_size</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@color/primaryXLightColor</item>
+        <item name="android:gravity">center</item>
         <item name="lineHeight">@dimen/fullscreen_message_line_height</item>
     </style>
     

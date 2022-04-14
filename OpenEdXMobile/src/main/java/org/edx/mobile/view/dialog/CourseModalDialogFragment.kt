@@ -139,28 +139,19 @@ class CourseModalDialogFragment : DialogFragment() {
     }
 
     private fun initializeProductPrice() {
-        if (iapViewModel.price.isEmpty().not()) {
-            binding.layoutUpgradeBtn.btnUpgrade.text = iapViewModel.price
-            binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
-                binding.layoutUpgradeBtn.shimmerViewContainer.hideShimmer()
-                binding.layoutUpgradeBtn.btnUpgrade.isEnabled = true
-            }, 500)
-            return
-        }
         ProductManager.getProductByCourseId(courseId)?.let {
             billingProcessor?.querySyncDetails(
                 productId = it
             ) { _, skuDetails ->
                 val skuDetail = skuDetails?.get(0)
                 if (skuDetail?.sku == it) {
-                    val price = ResourceUtil.getFormattedString(
-                        resources,
-                        R.string.label_upgrade_course_button,
-                        AppConstants.PRICE,
-                        skuDetail.price
-                    ).toString()
-                    binding.layoutUpgradeBtn.btnUpgrade.text = price
-                    iapViewModel.price = price
+                    binding.layoutUpgradeBtn.btnUpgrade.text =
+                        ResourceUtil.getFormattedString(
+                            resources,
+                            R.string.label_upgrade_course_button,
+                            AppConstants.PRICE,
+                            skuDetail.price
+                        ).toString()
                     // The app get the sku details instantly, so add some wait to perform
                     // animation at least one cycle.
                     binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
@@ -181,13 +172,7 @@ class CourseModalDialogFragment : DialogFragment() {
 
         iapViewModel.checkoutResponse.observe(viewLifecycleOwner, NonNullObserver {
             if (it.paymentPageUrl.isNotEmpty())
-                purchaseProduct(iapViewModel.getProductId())
-        })
-
-        iapViewModel.orderComplete.observe(viewLifecycleOwner, NonNullObserver {
-            if (it) {
-                dismiss()
-            }
+                purchaseProduct(iapViewModel.productId)
         })
 
         iapViewModel.errorMessage.observe(viewLifecycleOwner, NonNullObserver { errorMsg ->
@@ -223,12 +208,14 @@ class CourseModalDialogFragment : DialogFragment() {
         lifecycleScope.launch {
             iapViewModel.setPurchaseToken(purchaseToken)
             iapViewModel.showFullScreenLoader()
+            dismiss()
         }
     }
 
     private fun showUpgradeErrorDialog(
         @StringRes errorResId: Int = R.string.general_error_message
     ) {
+        if (!isAdded) return;
         AlertDialogFragment.newInstance(
             getString(R.string.title_upgrade_error),
             getString(errorResId),
@@ -264,7 +251,7 @@ class CourseModalDialogFragment : DialogFragment() {
             courseId: String,
             courseName: String,
             price: String,
-            isSelfPaced: Boolean,
+            isSelfPaced: Boolean
         ): CourseModalDialogFragment {
             val frag = CourseModalDialogFragment()
             val args = Bundle().apply {
