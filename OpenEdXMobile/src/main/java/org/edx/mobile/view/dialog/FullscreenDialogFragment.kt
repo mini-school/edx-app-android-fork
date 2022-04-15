@@ -120,7 +120,7 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
     }
 
     private fun resetPurchase() {
-        iapViewModel.reset()
+        iapViewModel.resetPurchase(false)
         dismiss()
     }
 

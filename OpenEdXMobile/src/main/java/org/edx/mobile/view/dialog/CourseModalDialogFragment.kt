@@ -207,7 +207,7 @@ class CourseModalDialogFragment : DialogFragment() {
     private fun onProductPurchased(purchaseToken: String) {
         lifecycleScope.launch {
             iapViewModel.setPurchaseToken(purchaseToken)
-            iapViewModel.showFullScreenLoader()
+            iapViewModel.showFullScreenLoader(true)
             dismiss()
         }
     }
@@ -215,6 +215,7 @@ class CourseModalDialogFragment : DialogFragment() {
     private fun showUpgradeErrorDialog(
         @StringRes errorResId: Int = R.string.general_error_message
     ) {
+        // To restrict showing error dialog on an unattached fragment
         if (!isAdded) return;
         AlertDialogFragment.newInstance(
             getString(R.string.title_upgrade_error),

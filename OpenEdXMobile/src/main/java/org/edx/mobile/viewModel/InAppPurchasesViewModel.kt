@@ -32,8 +32,8 @@ class InAppPurchasesViewModel @Inject constructor(
     private val _executeOrderResponse = MutableLiveData<ExecuteOrderResponse>()
     val executeOrderResponse: LiveData<ExecuteOrderResponse> = _executeOrderResponse
 
-    private val _displayFullscreenLoaderDialog = MutableLiveData(false)
-    val displayFullscreenLoaderDialog: LiveData<Boolean> = _displayFullscreenLoaderDialog
+    private val _showFullscreenLoaderDialog = MutableLiveData(false)
+    val showFullscreenLoaderDialog: LiveData<Boolean> = _showFullscreenLoaderDialog
 
     private val _refreshCourseData = MutableLiveData(false)
     val refreshCourseData: LiveData<Boolean> = _refreshCourseData
@@ -90,6 +90,7 @@ class InAppPurchasesViewModel @Inject constructor(
     }
 
     fun executeOrder() {
+        _isVerificationPending = false
         repository.executeOrder(
             basketId = basketId,
             productId = productId,
@@ -99,7 +100,7 @@ class InAppPurchasesViewModel @Inject constructor(
                     result.data?.let {
                         _executeOrderResponse.value = it
                         orderExecuted()
-                        refreshCourseData()
+                        refreshCourseData(true)
                     }
                     endLoading()
                 }
@@ -114,7 +115,6 @@ class InAppPurchasesViewModel @Inject constructor(
     private fun orderExecuted() {
         _productId = ""
         basketId = 0
-        _isVerificationPending = false
     }
 
     fun setError(errorCode: Int, throwable: Throwable) {
@@ -156,29 +156,17 @@ class InAppPurchasesViewModel @Inject constructor(
         this.purchaseToken = purchaseToken
     }
 
-    fun showFullScreenLoader() {
-        _displayFullscreenLoaderDialog.value = true
+    fun showFullScreenLoader(show: Boolean) {
+        _showFullscreenLoaderDialog.value = show
     }
 
-    fun fullScreenLoaderShown() {
-        _displayFullscreenLoaderDialog.value = false
+    fun refreshCourseData(refresh: Boolean) {
+        _refreshCourseData.postValue(refresh)
     }
 
-    private fun refreshCourseData() {
-        _refreshCourseData.postValue(true)
-    }
-
-    fun courseRefreshed() {
-        _refreshCourseData.value = false
-    }
-
-    fun processComplete() {
-        _processComplete.postValue(true)
-    }
-
-    fun reset() {
+    // To refrain the View Model from emitting further observable calls
+    fun resetPurchase(complete: Boolean) {
         _isVerificationPending = true
-        _displayFullscreenLoaderDialog.value = false
-        _processComplete.value = false
+        _processComplete.postValue(complete)
     }
 }

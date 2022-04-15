@@ -138,11 +138,6 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initObservers()
-        fullscreenLoader = try {
-            childFragmentManager.findFragmentByTag(FullscreenLoaderDialogFragment.TAG) as FullscreenLoaderDialogFragment
-        } catch (e: Exception) {
-            FullscreenLoaderDialogFragment.newInstance()
-        }
         ConfigUtil.checkValuePropEnabled(
             environment.config,
             object : ConfigUtil.OnValuePropStatusListener {
@@ -151,6 +146,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                         environment.remoteFeaturePrefs.setValuePropEnabled(isEnabled)
                         adapter.setValuePropEnabled(isEnabled)
                         adapter.notifyDataSetChanged()
+                        initFullscreenLoader()
                     }
                 }
             })
@@ -158,10 +154,10 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     }
 
     private fun initObservers() {
-        iapViewModel.displayFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
+        iapViewModel.showFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
             if (it) {
                 fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
-                iapViewModel.fullScreenLoaderShown()
+                iapViewModel.showFullScreenLoader(false)
             }
         })
 
@@ -169,7 +165,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             if (it) {
                 refreshOnCache = true
                 loadData(showProgress = false, fromCache = false)
-                iapViewModel.courseRefreshed()
+                iapViewModel.refreshCourseData(false)
             }
         })
 
@@ -177,7 +173,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             if (it) {
                 fullscreenLoader.dismiss()
                 SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
-                iapViewModel.reset()
+                iapViewModel.resetPurchase(false)
             }
         })
     }
@@ -237,14 +233,8 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                             showProgress = response.body()?.isEmpty() == true,
                             fromCache = false
                         )
-                    } else if (refreshOnCache && fullscreenLoader.isAdded) {
-                        Timer("", false).schedule(
-                            FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY
-                        ) {
-                            refreshOnCache = false
-                            iapViewModel.processComplete()
-                        }
                     }
+                    finalizeInAppPurchase()
                 } else if (fromCache) { // Fetch latest data from server if cache call's response is unSuccessful
                     loadData(showProgress = true, fromCache = false)
                 } else {
@@ -337,6 +327,26 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             errorNotification.hideError()
         }
         invalidateView()
+    }
+
+    private fun initFullscreenLoader() {
+        // To proceed with the same instance of dialog fragment in case of orientation change
+        fullscreenLoader = try {
+            childFragmentManager.findFragmentByTag(FullscreenLoaderDialogFragment.TAG) as FullscreenLoaderDialogFragment
+        } catch (e: Exception) {
+            FullscreenLoaderDialogFragment.newInstance()
+        }
+    }
+
+    private fun finalizeInAppPurchase() {
+        if (refreshOnCache && fullscreenLoader.isAdded) {
+            Timer("", false).schedule(
+                FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY
+            ) {
+                refreshOnCache = false
+                iapViewModel.resetPurchase(true)
+            }
+        }
     }
 
     private fun detectDeeplink() {

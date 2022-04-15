@@ -110,7 +110,7 @@
     </style>
 
     <style name="campaign_launch_text" parent="bold_text">
-        <item name="android:textSize">@dimen/fullscreen_message_text_size</item>
+        <item name="android:textSize">@dimen/edx_xxxx_large</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@color/primaryXLightColor</item>
         <item name="android:gravity">center</item>

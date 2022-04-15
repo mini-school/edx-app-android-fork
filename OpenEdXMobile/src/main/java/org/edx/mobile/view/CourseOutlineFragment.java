@@ -292,12 +292,13 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
 
     private void initInAppPurchaseSetup() {
         if (courseData.getMode().equalsIgnoreCase(EnrollmentMode.AUDIT.toString()) && !isVideoMode) {
-            initInAppPurchaseView();
+            initFullscreenLoader();
             initInAppPurchaseObserver();
         }
     }
 
-    private void initInAppPurchaseView() {
+    private void initFullscreenLoader() {
+        // To proceed with the same instance of dialog fragment in case of orientation change
         this.fullscreenLoader = (FullscreenLoaderDialogFragment) getChildFragmentManager().findFragmentByTag(FullscreenLoaderDialogFragment.TAG);
         if (this.fullscreenLoader == null) {
             this.fullscreenLoader = FullscreenLoaderDialogFragment.newInstance();
@@ -307,26 +308,26 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     private void initInAppPurchaseObserver() {
         iapViewModel = new ViewModelProvider(requireActivity()).get(InAppPurchasesViewModel.class);
 
-        iapViewModel.getDisplayFullscreenLoaderDialog().observe(getViewLifecycleOwner(), value -> {
-            if (value) {
+        iapViewModel.getShowFullscreenLoaderDialog().observe(getViewLifecycleOwner(), show -> {
+            if (show) {
                 fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
-                iapViewModel.fullScreenLoaderShown();
+                iapViewModel.showFullScreenLoader(false);
             }
         });
 
-        iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), value -> {
-            if (value) {
-                courseData.setMode(EnrollmentMode.VERIFIED.toString());
+        iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), refresh -> {
+            if (refresh) {
                 getCourseComponentFromServer(false);
-                iapViewModel.courseRefreshed();
+                iapViewModel.refreshCourseData(false);
             }
         });
 
-        iapViewModel.getProcessComplete().observe(getViewLifecycleOwner(), value -> {
-            if (value) {
+        iapViewModel.getProcessComplete().observe(getViewLifecycleOwner(), complete -> {
+            if (complete) {
+                courseData.setMode(EnrollmentMode.VERIFIED.toString());
                 fullscreenLoader.dismiss();
                 new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
-                iapViewModel.reset();
+                iapViewModel.resetPurchase(false);
             }
         });
     }
@@ -463,13 +464,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 courseManager.addCourseDataInAppLevelCache(courseId, courseComponent);
                 loadData(validateCourseComponent(courseComponent));
                 swipeContainer.setRefreshing(false);
-                if (fullscreenLoader != null && fullscreenLoader.isAdded())
-                    new Timer("", false).schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            iapViewModel.processComplete();
-                        }
-                    }, FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY);
+                finalizeInAppPurchase();
             }
 
             @Override
@@ -638,6 +633,16 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
         }
         environment.getAnalyticsRegistry().trackPLSCourseDatesShift(courseData.getCourseId(),
                 courseData.getMode(), Analytics.Screens.PLS_COURSE_DASHBOARD, isSuccess);
+    }
+
+    private void finalizeInAppPurchase() {
+        if (fullscreenLoader != null && fullscreenLoader.isAdded())
+            new Timer("", false).schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    iapViewModel.resetPurchase(true);
+                }
+            }, FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY);
     }
 
     @Override
