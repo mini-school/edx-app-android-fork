@@ -38,8 +38,8 @@ class InAppPurchasesViewModel @Inject constructor(
     private val _refreshCourseData = MutableLiveData(false)
     val refreshCourseData: LiveData<Boolean> = _refreshCourseData
 
-    private val _processComplete = MutableLiveData(false)
-    val processComplete: LiveData<Boolean> = _processComplete
+    private val _purchaseFlowComplete = MutableLiveData(false)
+    val purchaseFlowComplete: LiveData<Boolean> = _purchaseFlowComplete
 
     private var _productId: String = ""
     val productId: String
@@ -149,7 +149,7 @@ class InAppPurchasesViewModel @Inject constructor(
     }
 
     fun endLoading() {
-        _showLoader.value = false
+        _showLoader.postValue(false)
     }
 
     fun setPurchaseToken(purchaseToken: String) {
@@ -167,6 +167,6 @@ class InAppPurchasesViewModel @Inject constructor(
     // To refrain the View Model from emitting further observable calls
     fun resetPurchase(complete: Boolean) {
         _isVerificationPending = true
-        _processComplete.postValue(complete)
+        _purchaseFlowComplete.postValue(complete)
     }
 }

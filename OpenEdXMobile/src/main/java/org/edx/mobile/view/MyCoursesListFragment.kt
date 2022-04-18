@@ -57,7 +57,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
     private lateinit var binding: FragmentMyCoursesListBinding
     private val logger = Logger(javaClass.simpleName)
     private var refreshOnResume = false
-    private var refreshOnCache = false
+    private var refreshOnPurchase = false
     private var lastClickTime: Long = 0
 
     @Inject
@@ -132,12 +132,12 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
             it.setValuePropEnabled(environment.remoteFeaturePrefs.isValuePropEnabled())
         }
         binding.myCourseList.onItemClickListener = adapter
+        initInAppPurchaseSetup()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initObservers()
         ConfigUtil.checkValuePropEnabled(
             environment.config,
             object : ConfigUtil.OnValuePropStatusListener {
@@ -146,36 +146,49 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                         environment.remoteFeaturePrefs.setValuePropEnabled(isEnabled)
                         adapter.setValuePropEnabled(isEnabled)
                         adapter.notifyDataSetChanged()
-                        initFullscreenLoader()
+                        initInAppPurchaseSetup()
                     }
                 }
             })
         loadData(showProgress = true, fromCache = true)
     }
 
+    private fun initInAppPurchaseSetup() {
+        if (environment.remoteFeaturePrefs.isValuePropEnabled()) {
+            initFullscreenLoader()
+            initObservers()
+        }
+    }
+
     private fun initObservers() {
-        iapViewModel.showFullscreenLoaderDialog.observe(viewLifecycleOwner, NonNullObserver {
-            if (it) {
-                fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
-                iapViewModel.showFullScreenLoader(false)
-            }
-        })
+        iapViewModel.showFullscreenLoaderDialog.observe(
+            viewLifecycleOwner,
+            NonNullObserver { canShowLoader ->
+                if (canShowLoader) {
+                    fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
+                    iapViewModel.showFullScreenLoader(false)
+                }
+            })
 
-        iapViewModel.refreshCourseData.observe(viewLifecycleOwner, NonNullObserver {
-            if (it) {
-                refreshOnCache = true
-                loadData(showProgress = false, fromCache = false)
-                iapViewModel.refreshCourseData(false)
-            }
-        })
+        iapViewModel.refreshCourseData.observe(
+            viewLifecycleOwner,
+            NonNullObserver { refreshCourse ->
+                if (refreshCourse) {
+                    refreshOnPurchase = true
+                    loadData(showProgress = false, fromCache = false)
+                    iapViewModel.refreshCourseData(false)
+                }
+            })
 
-        iapViewModel.processComplete.observe(viewLifecycleOwner, NonNullObserver {
-            if (it) {
-                fullscreenLoader.dismiss()
-                SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
-                iapViewModel.resetPurchase(false)
-            }
-        })
+        iapViewModel.purchaseFlowComplete.observe(
+            viewLifecycleOwner,
+            NonNullObserver { isPurchaseCompleted ->
+                if (isPurchaseCompleted) {
+                    fullscreenLoader.dismiss()
+                    SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
+                    iapViewModel.resetPurchase(false)
+                }
+            })
     }
 
     private val dataCallback: DataCallback<Int> = object : DataCallback<Int>() {
@@ -234,7 +247,7 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
                             fromCache = false
                         )
                     }
-                    finalizeInAppPurchase()
+                    resetPurchase()
                 } else if (fromCache) { // Fetch latest data from server if cache call's response is unSuccessful
                     loadData(showProgress = true, fromCache = false)
                 } else {
@@ -338,12 +351,12 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
         }
     }
 
-    private fun finalizeInAppPurchase() {
-        if (refreshOnCache && fullscreenLoader.isAdded) {
+    private fun resetPurchase() {
+        if (refreshOnPurchase && fullscreenLoader.isAdded) {
             Timer("", false).schedule(
                 FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY
             ) {
-                refreshOnCache = false
+                refreshOnPurchase = false
                 iapViewModel.resetPurchase(true)
             }
         }

@@ -44,6 +44,7 @@ import org.edx.mobile.deeplink.Screen;
 import org.edx.mobile.deeplink.ScreenDef;
 import org.edx.mobile.event.CourseDashboardRefreshEvent;
 import org.edx.mobile.event.CourseUpgradedEvent;
+import org.edx.mobile.event.MainDashboardRefreshEvent;
 import org.edx.mobile.event.MediaStatusChangeEvent;
 import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.exception.AuthException;
@@ -308,24 +309,25 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     private void initInAppPurchaseObserver() {
         iapViewModel = new ViewModelProvider(requireActivity()).get(InAppPurchasesViewModel.class);
 
-        iapViewModel.getShowFullscreenLoaderDialog().observe(getViewLifecycleOwner(), show -> {
-            if (show) {
+        iapViewModel.getShowFullscreenLoaderDialog().observe(getViewLifecycleOwner(), canShowLoader -> {
+            if (canShowLoader) {
                 fullscreenLoader.show(getChildFragmentManager(), FullscreenLoaderDialogFragment.TAG);
                 iapViewModel.showFullScreenLoader(false);
             }
         });
 
-        iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), refresh -> {
-            if (refresh) {
+        iapViewModel.getRefreshCourseData().observe(getViewLifecycleOwner(), refreshCourse -> {
+            if (refreshCourse) {
                 getCourseComponentFromServer(false);
                 iapViewModel.refreshCourseData(false);
             }
         });
 
-        iapViewModel.getProcessComplete().observe(getViewLifecycleOwner(), complete -> {
-            if (complete) {
-                courseData.setMode(EnrollmentMode.VERIFIED.toString());
+        iapViewModel.getPurchaseFlowComplete().observe(getViewLifecycleOwner(), isPurchaseCompleted -> {
+            if (isPurchaseCompleted) {
                 fullscreenLoader.dismiss();
+                // To refresh the Enrollment Mode from AUDIT to VERIFIED
+                EventBus.getDefault().post(new MainDashboardRefreshEvent());
                 new SnackbarErrorNotification(listView).showError(R.string.purchase_success_message);
                 iapViewModel.resetPurchase(false);
             }
@@ -461,10 +463,10 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 progressCallback, errorNotification, null, this) {
             @Override
             protected void onResponse(@NonNull final CourseComponent courseComponent) {
+                resetPurchase();
                 courseManager.addCourseDataInAppLevelCache(courseId, courseComponent);
                 loadData(validateCourseComponent(courseComponent));
                 swipeContainer.setRefreshing(false);
-                finalizeInAppPurchase();
             }
 
             @Override
@@ -635,14 +637,16 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                 courseData.getMode(), Analytics.Screens.PLS_COURSE_DASHBOARD, isSuccess);
     }
 
-    private void finalizeInAppPurchase() {
-        if (fullscreenLoader != null && fullscreenLoader.isAdded())
+    private void resetPurchase() {
+        if (fullscreenLoader != null && fullscreenLoader.isAdded()) {
+            courseData.setMode(EnrollmentMode.VERIFIED.toString());
             new Timer("", false).schedule(new TimerTask() {
                 @Override
                 public void run() {
                     iapViewModel.resetPurchase(true);
                 }
             }, FullscreenLoaderDialogFragment.FULLSCREEN_DISPLAY_DELAY);
+        }
     }
 
     @Override
