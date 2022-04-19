@@ -16,6 +16,8 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.event.VideoPlaybackEvent;
@@ -38,8 +40,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import javax.inject.Inject;
 
 import de.greenrobot.event.EventBus;
 import subtitleFile.Caption;
@@ -108,12 +108,10 @@ public abstract class BaseCourseUnitVideoFragment extends CourseUnitFragment
 
     @Inject
     LoginPrefs loginPrefs;
-
     @Inject
-    CourseAPI courseApi;
-
+    private CourseAPI courseApi;
     @Inject
-    TranscriptManager transcriptManager;
+    private TranscriptManager transcriptManager;
 
     private ViewTreeObserver.OnGlobalLayoutListener transcriptListLayoutListener;
 
@@ -162,6 +160,7 @@ public abstract class BaseCourseUnitVideoFragment extends CourseUnitFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         unit = getArguments() == null ? null :
                 (VideoBlockModel) getArguments().getSerializable(Router.EXTRA_COURSE_UNIT);
         EventBus.getDefault().registerSticky(this);

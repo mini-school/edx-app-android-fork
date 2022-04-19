@@ -20,6 +20,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.databinding.FragmentDashboardErrorLayoutBinding;
@@ -40,11 +42,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class CourseTabsDashboardFragment extends TabsBaseFragment {
     private static final String ARG_COURSE_NOT_FOUND = "ARG_COURSE_NOT_FOUND";
     protected final Logger logger = new Logger(getClass().getName());
@@ -55,10 +52,10 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
     private EnrolledCoursesResponse courseData;
 
     @Inject
-    AnalyticsRegistry analyticsRegistry;
+    private AnalyticsRegistry analyticsRegistry;
 
     @Inject
-    CourseAPI courseApi;
+    private CourseAPI courseApi;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateDownloadProgressRunnable;

@@ -20,6 +20,8 @@ import androidx.annotation.StringRes;
 import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
@@ -48,12 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 
-@AndroidEntryPoint
 public class BulkDownloadFragment extends BaseFragment implements BaseFragment.PermissionListener {
     private final String EXTRA_COURSE_VIDEOS_STATUS = "extra_course_videos_status";
 
@@ -84,7 +82,6 @@ public class BulkDownloadFragment extends BaseFragment implements BaseFragment.P
 
     private RowBulkDownloadBinding binding;
     private CourseOutlineAdapter.DownloadListener downloadListener;
-
     @Inject
     protected IEdxEnvironment environment;
     private VideoPrefs prefManager;

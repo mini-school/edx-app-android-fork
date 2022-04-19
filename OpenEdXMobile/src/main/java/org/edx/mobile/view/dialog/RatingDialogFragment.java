@@ -2,16 +2,16 @@ package org.edx.mobile.view.dialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AlertDialog;
 import android.widget.Button;
 import android.widget.RatingBar;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentActivity;
+import com.google.inject.Inject;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
@@ -28,19 +28,14 @@ import org.edx.mobile.view.Router;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.inject.Inject;
+import roboguice.fragment.RoboDialogFragment;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
-public class RatingDialogFragment extends DialogFragment implements AlertDialog.OnShowListener,
+public class RatingDialogFragment extends RoboDialogFragment implements AlertDialog.OnShowListener,
         RatingBar.OnRatingBarChangeListener {
-
     @Inject
-    Router mRouter;
+    private Router mRouter;
     @Inject
-    AnalyticsRegistry analyticsRegistry;
-
+    private AnalyticsRegistry analyticsRegistry;
     private AlertDialog mAlertDialog;
     @NonNull
     private FragmentDialogRatingBinding binding;

@@ -33,6 +33,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
@@ -87,20 +88,17 @@ import org.edx.mobile.view.common.TaskProgressCallback;
 import org.edx.mobile.view.dialog.AlertDialogFragment;
 import org.edx.mobile.view.dialog.VideoDownloadQualityDialogFragment;
 import org.edx.mobile.viewModel.CourseDateViewModel;
+import org.edx.mobile.viewModel.ViewModelFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-@AndroidEntryPoint
 public class CourseOutlineFragment extends OfflineSupportBaseFragment
         implements RefreshListener, VideoDownloadHelper.DownloadManagerCallback,
         LoaderManager.LoaderCallbacks<AsyncTaskResult<CourseComponent>>, BaseFragment.PermissionListener {
@@ -131,10 +129,10 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     private FullScreenErrorNotification errorNotification;
 
     @Inject
-    CourseAPI courseApi;
+    private CourseAPI courseApi;
 
     @Inject
-    VideoDownloadHelper downloadManager;
+    private VideoDownloadHelper downloadManager;
 
     private CourseDateViewModel courseDateViewModel;
 
@@ -218,7 +216,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     }
 
     private void initObserver() {
-        courseDateViewModel = new ViewModelProvider(this).get(CourseDateViewModel.class);
+        courseDateViewModel = new ViewModelProvider(this, new ViewModelFactory()).get(CourseDateViewModel.class);
 
         courseDateViewModel.getSyncLoader().observe(getViewLifecycleOwner(), showLoader -> {
             if (showLoader) {
@@ -784,7 +782,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
     }
 
     private void setUpVideoQualityHeader(CourseComponent courseComponent) {
-        if (isVideoMode && isOnCourseOutline && courseComponent.getDownloadableVideosCount() > 0) {
+        if (isVideoMode && isOnCourseOutline) {
             videoQualityLayout.setVisibility(View.VISIBLE);
             videoQualityLayout.setOnClickListener(v -> {
                 environment.getAnalyticsRegistry().trackEvent(Analytics.Events.COURSE_VIDEOS_VIDEO_DOWNLOAD_QUALITY_CLICKED,

@@ -1,16 +1,12 @@
 package org.edx.mobile.view;
 
 import android.os.Bundle;
-
 import androidx.fragment.app.Fragment;
 
 import org.edx.mobile.base.BaseSingleFragmentActivity;
 import org.edx.mobile.base.WebViewProgramInfoFragment;
 import org.edx.mobile.module.analytics.Analytics;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class ProgramInfoActivity extends BaseSingleFragmentActivity {
 
     @Override

@@ -10,6 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.util.VideoPlaybackSpeed;
@@ -18,9 +20,9 @@ import org.edx.mobile.view.adapters.SpeedAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
+import roboguice.fragment.RoboDialogFragment;
 
-public class SpeedDialogFragment extends DialogFragment {
+public class SpeedDialogFragment extends RoboDialogFragment {
 
     public interface IListDialogCallback {
         void onItemClicked(Float speed);

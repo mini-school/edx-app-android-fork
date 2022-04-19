@@ -5,10 +5,14 @@ buildscript {
         google()
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://android-sdk.is.com/" }
+        maven { url "https://sdk.tapjoy.com/" }
+        maven { url "https://artifactory.verizonmedia.com/artifactory/maven/" }
     }
 
     dependencies {
         classpath 'org.yaml:snakeyaml:1.29'
+
         //Included for NewRelic
         classpath "com.newrelic.agent.android:agent-gradle-plugin:$newrelic_version"
         //Screenshot testing library
@@ -20,6 +24,7 @@ buildscript {
 }
 
 apply plugin: 'edxapp'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt' //To enable data binding with kotlin
@@ -31,15 +36,13 @@ edx {
 apply plugin: 'newrelic'
 apply plugin: 'com.facebook.testing.screenshot'
 apply from: file('gradle_scripts/AndroidHelper.gradle')
-apply plugin: 'dagger.hilt.android.plugin'
+
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.4"
 }
 // Inspiration https://medium.com/@android2ee/playing-with-gradle-3-and-some-few-code-coverage-on-android-with-jacoco-47df7c9328ae
 tasks.withType(Test) {
     jacoco.includeNoLocationClasses = true
-    // ref: https://stackoverflow.com/a/68139455
-    jacoco.excludes = ['jdk.internal.*']
 }
 /**
  * Computes a semantic version string, e.g. "1.0" or "2.5.7" by parsing git branches or tags.
@@ -133,12 +136,64 @@ dependencies {
     implementation "com.google.android.gms:play-services-auth:16.0.1"
     // Google Firebase
     implementation "com.google.firebase:firebase-core:16.0.9"
-    implementation "com.google.firebase:firebase-messaging:20.2.0"
-
+    implementation ("com.google.firebase:firebase-messaging:20.2.0") {
+        // This exclusion has been added due to a conflict between this library and Roboguice
+        // (which has already added the javax.inject group) causing the following error during
+        // compile time: Error: Program type already present: javax.inject.Inject
+        exclude group: 'javax.inject'
+    }
     // Add the dependency for the Performance Monitoring library
     implementation 'com.google.firebase:firebase-perf:17.0.2'
     // Firebase remote config
     implementation 'com.google.firebase:firebase-config:16.5.0'
+
+    // AdMob libraries
+    implementation ('com.google.guava:listenablefuture') {
+        version {
+            strictly '9999.0-empty-to-avoid-conflict-with-guava'
+        }
+    }
+    implementation("androidx.work:work-runtime") {
+        version {
+            strictly '2.6.0'
+        }
+    }
+    implementation("androidx.core:core") {
+        version {
+            strictly '1.6.0'
+        }
+    }
+    implementation("com.google.android.gms:play-services-measurement") {
+        version {
+            strictly '18.0.3'
+        }
+    }
+    implementation("com.google.android.gms:play-services-measurement-api") {
+        version {
+            strictly '18.0.3'
+        }
+    }
+    implementation("com.google.android.gms:play-services-measurement-impl") {
+        version {
+            strictly '18.0.3'
+        }
+    }
+    implementation("com.google.android.gms:play-services-measurement-sdk") {
+        version {
+            strictly '18.0.3'
+        }
+    }
+    implementation 'com.google.android.gms:play-services-ads:20.6.0'
+    //implementation  'androidx.annotation:annotation:4.7.0.0'
+    implementation  'com.google.ads.mediation:adcolony:4.7.0.0'
+    implementation  'com.google.ads.mediation:applovin:11.3.1.0'
+    implementation  'com.google.ads.mediation:facebook:6.8.0.0'
+    implementation  'com.google.ads.mediation:inmobi:10.0.5.0'
+    implementation  'com.google.ads.mediation:ironsource:7.2.1.0'
+    implementation  'com.google.ads.mediation:mytarget:5.15.1.0'
+    implementation  'com.google.ads.mediation:tapjoy:12.9.0.0'
+    implementation  'com.google.ads.mediation:verizonmedia:1.14.0.0'
+    implementation  'com.google.ads.mediation:vungle:6.10.5.0'
 
     // Exo Player
     implementation 'com.google.android.exoplayer:exoplayer:2.16.0'
@@ -161,17 +216,17 @@ dependencies {
      * backport critical fixes to the 3.12.x branch through December 31, 2020.
      * Ref: https://square.github.io/okhttp/#requirements
      */
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.8'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.8'
     /* Exclude dependencies defined statically at the top-
      * level, to prevent them from being resolved to the
      * latest version as a result of dynamic version
      * definitions in the transitive dependencies.
      */
-    implementation ('com.squareup.retrofit2:retrofit:2.9.0') {
+    implementation ('com.squareup.retrofit2:retrofit:2.8.1') {
         exclude group: 'com.squareup.okhttp3', module: 'okhttp'
     }
-    implementation ('com.squareup.retrofit2:converter-gson:2.9.0') {
+    implementation ('com.squareup.retrofit2:converter-gson:2.8.1') {
         exclude group: 'com.squareup.okhttp3', module: 'okhttp'
         exclude group: 'com.google.code.gson', module: 'gson'
     }
@@ -229,7 +284,7 @@ dependencies {
     testImplementation ("org.mockito:mockito-core:2.19.0"){
         exclude group: 'org.hamcrest'
     }
-    testImplementation "org.robolectric:robolectric:4.7.3"
+    testImplementation "org.robolectric:robolectric:4.3.1"
     testImplementation "com.github.nimbl3:robolectric.shadows-supportv4:4.1-SNAPSHOT"
     testImplementation "org.robolectric:shadows-multidex:4.0.1"
     testImplementation 'org.assertj:assertj-core:2.5.0'
@@ -248,8 +303,8 @@ dependencies {
     testImplementation ('com.squareup.assertj:assertj-android-appcompat-v7:1.1.1') {
         exclude group: 'com.android.support'
     }
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.9.0'
-    testImplementation ('com.squareup.retrofit2:retrofit-mock:2.9.0') {
+    testImplementation 'com.squareup.okhttp3:mockwebserver:3.12.8'
+    testImplementation ('com.squareup.retrofit2:retrofit-mock:2.8.1') {
         exclude group: 'com.squareup.okhttp3', module: 'okhttp'
     }
 
@@ -265,9 +320,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
     implementation "com.android.billingclient:billing-ktx:$kotlin_version_billing"
 
-    // dependency on Shimmer for Android
-    implementation "com.facebook.shimmer:shimmer:0.5.0"
-
     /**
      * Using debugImplementation here, so that LeakCanary only runs with debug variants of the builds.
      * p.s. it won't run with the debuggable variant.
@@ -276,16 +328,6 @@ dependencies {
      * https://square.github.io/leakcanary/recipes/#setting-up-leakcanary-for-different-product-flavors
      */
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
-
-    // Hilt build dependencies
-    implementation "com.google.dagger:hilt-android:$hilt_version"
-    kapt "com.google.dagger:hilt-compiler:$hilt_version"
-    // For instrumentation tests
-    androidTestImplementation "com.google.dagger:hilt-android-testing:$hilt_version"
-    kaptAndroidTest "com.google.dagger:hilt-compiler:$hilt_version"
-    // For local unit tests
-    testImplementation "com.google.dagger:hilt-android-testing:$hilt_version"
-    kaptTest "com.google.dagger:hilt-compiler:$hilt_version"
 }
 
 configurations {
@@ -332,6 +374,10 @@ android {
     buildFeatures {
         viewBinding true
         dataBinding true
+    }
+
+    dexOptions {
+        javaMaxHeapSize "2g"
     }
 
     flavorDimensions "default"
@@ -456,13 +502,13 @@ android {
         if (project.hasProperty('ASSETS')) {
             prod.assets.srcDirs = [ASSETS]
         }
-        // Shared directory of both unit and instrumentation to use common base classes.
+
         String sharedTestDir = 'src/sharedTest/java'
         test {
-            java.srcDirs += sharedTestDir
+            java.srcDir sharedTestDir
         }
         androidTest {
-            java.srcDirs += sharedTestDir
+            java.srcDir sharedTestDir
         }
     }
 

@@ -14,7 +14,6 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.gson.JsonObject;
 
 import org.edx.mobile.R;
-import org.edx.mobile.base.UiTest;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.model.Filter;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;

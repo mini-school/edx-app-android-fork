@@ -1,7 +1,6 @@
 package org.edx.mobile.repositorie
 
-import org.edx.mobile.exception.ErrorMessage
-import org.edx.mobile.extenstion.toInAppPurchasesResult
+import org.edx.mobile.base.MainApplication
 import org.edx.mobile.http.model.NetworkResponseCallback
 import org.edx.mobile.http.model.Result
 import org.edx.mobile.inapppurchases.InAppPurchasesAPI
@@ -11,8 +10,21 @@ import org.edx.mobile.model.iap.ExecuteOrderResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import roboguice.RoboGuice
 
-class InAppPurchasesRepository(private var iapAPI: InAppPurchasesAPI) {
+class InAppPurchasesRepository {
+
+    private var iapAPI: InAppPurchasesAPI =
+        RoboGuice.getInjector(MainApplication.application)
+            .getInstance(InAppPurchasesAPI::class.java)
+
+    companion object {
+        private var instance: InAppPurchasesRepository? = null
+        fun getInstance(): InAppPurchasesRepository =
+            instance ?: synchronized(this) {
+                instance ?: InAppPurchasesRepository().also { instance = it }
+            }
+    }
 
     fun addToBasket(productId: String, callback: NetworkResponseCallback<AddToBasketResponse>) {
         iapAPI.addToBasket(productId).enqueue(object : Callback<AddToBasketResponse> {
@@ -20,7 +32,14 @@ class InAppPurchasesRepository(private var iapAPI: InAppPurchasesAPI) {
                 call: Call<AddToBasketResponse>,
                 response: Response<AddToBasketResponse>
             ) {
-                response.toInAppPurchasesResult(callback, ErrorMessage.ADD_TO_BASKET_CODE)
+                callback.onSuccess(
+                    Result.Success<AddToBasketResponse>(
+                        isSuccessful = response.isSuccessful,
+                        data = response.body(),
+                        code = response.code(),
+                        message = response.message()
+                    )
+                )
             }
 
             override fun onFailure(call: Call<AddToBasketResponse>, t: Throwable) {
@@ -35,7 +54,14 @@ class InAppPurchasesRepository(private var iapAPI: InAppPurchasesAPI) {
                 call: Call<CheckoutResponse>,
                 response: Response<CheckoutResponse>
             ) {
-                response.toInAppPurchasesResult(callback, ErrorMessage.CHECKOUT_CODE)
+                callback.onSuccess(
+                    Result.Success<CheckoutResponse>(
+                        isSuccessful = response.isSuccessful,
+                        data = response.body(),
+                        code = response.code(),
+                        message = response.message()
+                    )
+                )
             }
 
             override fun onFailure(call: Call<CheckoutResponse>, t: Throwable) {
@@ -59,7 +85,14 @@ class InAppPurchasesRepository(private var iapAPI: InAppPurchasesAPI) {
                 call: Call<ExecuteOrderResponse>,
                 response: Response<ExecuteOrderResponse>
             ) {
-                response.toInAppPurchasesResult(callback, ErrorMessage.EXECUTE_ORDER_CODE)
+                callback.onSuccess(
+                    Result.Success<ExecuteOrderResponse>(
+                        isSuccessful = response.isSuccessful,
+                        data = response.body(),
+                        code = response.code(),
+                        message = response.message()
+                    )
+                )
             }
 
             override fun onFailure(call: Call<ExecuteOrderResponse>, t: Throwable) {

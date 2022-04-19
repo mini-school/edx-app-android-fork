@@ -14,7 +14,7 @@ import org.edx.mobile.util.TextUtils
 abstract class VideoQualityAdapter(
     context: Context?,
     environment: IEdxEnvironment?,
-    private var selectedVideoQuality: VideoQuality
+    var selectedVideoQuality: VideoQuality
 ) :
     BaseListAdapter<VideoQuality>(
         context,

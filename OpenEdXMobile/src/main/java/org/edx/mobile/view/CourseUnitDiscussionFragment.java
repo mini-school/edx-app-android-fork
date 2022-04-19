@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.http.callback.Callback;
@@ -18,15 +20,10 @@ import org.edx.mobile.model.course.CourseComponent;
 import org.edx.mobile.model.course.DiscussionBlockModel;
 import org.json.JSONObject;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class CourseUnitDiscussionFragment extends CourseUnitFragment {
 
     @Inject
-    CourseAPI courseApi;
+    private CourseAPI courseApi;
 
     public static CourseUnitDiscussionFragment newInstance(CourseComponent unit, EnrolledCoursesResponse courseData) {
         CourseUnitDiscussionFragment f = new CourseUnitDiscussionFragment();

@@ -3,13 +3,14 @@ package org.edx.mobile.util;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import androidx.fragment.app.FragmentActivity;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import androidx.fragment.app.FragmentActivity;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
-import org.edx.mobile.base.MainApplication;
+import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
 import org.edx.mobile.view.dialog.IDialogCallback;
@@ -24,25 +25,28 @@ public class BrowserUtil {
         throw new UnsupportedOperationException();
     }
 
+    @Inject
+    private static IEdxEnvironment environment;
+
     /**
      * Opens given URL in native browser.
      * If app is running on zero-rated network, confirm the user if they really want to proceed
      * browsing the non-zero-rated content.
      * Otherwise, confirms the user as they are leaving the app to browse external contents.
-     *
+     * 
      * @param activity
      * @param url
      * @param canTrackEvent
      */
     public static void open(final FragmentActivity activity, final String url, final boolean canTrackEvent) {
-        if (TextUtils.isEmpty(url) || activity == null) {
+        if (TextUtils.isEmpty(url) || activity == null){
             logger.warn("cannot open URL in browser, either URL or activity parameter is NULL");
             return;
         }
-        Config config = MainApplication.getEnvironment(activity).getConfig();
-        if (url.startsWith("/")) {
+
+        if(url.startsWith("/")) {
             // use API host as the base URL for relative paths
-            String absoluteUrl = String.format("%s%s", config.getApiHostURL(), url);
+            String absoluteUrl = String.format("%s%s", environment.getConfig().getApiHostURL(), url);
             logger.debug(String.format("opening relative path URL: %s", absoluteUrl));
             openInBrowser(activity, absoluteUrl, canTrackEvent);
             return;
@@ -50,14 +54,15 @@ public class BrowserUtil {
 
 
         // verify if the app is running on zero-rated mobile data?
-        if (NetworkUtil.isConnectedMobile(activity) && NetworkUtil.isOnZeroRatedNetwork(activity, config)) {
+        if (NetworkUtil.isConnectedMobile(activity) && NetworkUtil.isOnZeroRatedNetwork(activity, environment.getConfig())) {
 
             // check if this URL is a white-listed URL, anything outside the white-list is EXTERNAL LINK
-            if (ConfigUtil.Companion.isWhiteListedURL(url, config)) {
+            if (ConfigUtil.Companion.isWhiteListedURL(url, environment.getConfig())) {
                 // this is white-listed URL
                 logger.debug(String.format("opening white-listed URL: %s", url));
                 openInBrowser(activity, url, canTrackEvent);
-            } else {
+            }
+            else {
                 // for non-white-listed URLs
 
                 // inform user they may get charged for browsing this URL
@@ -74,7 +79,8 @@ public class BrowserUtil {
 
                 MediaConsentUtils.showLeavingAppDataDialog(activity, callback);
             }
-        } else {
+        }
+        else {
             logger.debug(String.format("non-zero rated network, opening URL: %s", url));
             openInBrowser(activity, url, canTrackEvent);
         }
@@ -88,7 +94,7 @@ public class BrowserUtil {
         try {
             context.startActivity(intent);
             if (canTrackEvent) {
-                AnalyticsRegistry analyticsRegistry = MainApplication.getEnvironment(context).getAnalyticsRegistry();
+                AnalyticsRegistry analyticsRegistry = environment.getAnalyticsRegistry();
                 analyticsRegistry.trackBrowserLaunched(url);
             }
         } catch (ActivityNotFoundException e) {

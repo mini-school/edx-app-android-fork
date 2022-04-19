@@ -1,7 +1,6 @@
 package org.edx.mobile.view;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -31,6 +30,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
@@ -64,14 +64,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 
-@AndroidEntryPoint
 public class EditUserProfileFragment extends BaseFragment implements BaseFragment.PermissionListener {
 
     private static final int EDIT_FIELD_REQUEST = 1;
@@ -97,21 +93,21 @@ public class EditUserProfileFragment extends BaseFragment implements BaseFragmen
     private ViewHolder viewHolder;
 
     @Inject
-    UserService userService;
+    private UserService userService;
 
     @Inject
-    Router router;
+    private Router router;
 
     @Inject
-    AnalyticsRegistry analyticsRegistry;
+    private AnalyticsRegistry analyticsRegistry;
 
     @NonNull
     private final ImageCaptureHelper helper = new ImageCaptureHelper();
 
-    @SuppressLint("StaticFieldLeak")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         setHasOptionsMenu(true);
         EventBus.getDefault().register(this);
 
@@ -126,10 +122,8 @@ public class EditUserProfileFragment extends BaseFragment implements BaseFragmen
                 mCallback, CallTrigger.LOADING_CACHED));
 
         getProfileFormDescriptionTask = new GetProfileFormDescriptionTask(activity) {
-
             @Override
-            protected void onPostExecute(FormDescription formDescription) {
-                super.onPostExecute(formDescription);
+            protected void onSuccess(@NonNull FormDescription formDescription) throws Exception {
                 EditUserProfileFragment.this.formDescription = formDescription;
                 if (null != viewHolder) {
                     setData(account, formDescription);

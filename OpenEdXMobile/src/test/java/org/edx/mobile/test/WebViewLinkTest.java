@@ -1,14 +1,13 @@
 package org.edx.mobile.test;
 
+import android.net.Uri;
+
+import org.edx.mobile.util.links.WebViewLink;
+import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import android.net.Uri;
-
-import org.edx.mobile.base.BaseTestCase;
-import org.edx.mobile.util.links.WebViewLink;
-import org.junit.Test;
 
 public class WebViewLinkTest extends BaseTestCase {
     @Test

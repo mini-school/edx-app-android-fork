@@ -9,9 +9,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.bumptech.glide.Glide;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
-import org.edx.mobile.core.EdxDefaultModule;
 import org.edx.mobile.discussion.DiscussionTextUtils;
 import org.edx.mobile.discussion.IAuthorData;
 import org.edx.mobile.model.api.ProfileModel;
@@ -21,11 +21,11 @@ import org.edx.mobile.user.ProfileImageProvider;
 import org.edx.mobile.util.Config;
 import org.edx.mobile.util.UiUtils;
 
-import dagger.hilt.android.EntryPointAccessors;
+import roboguice.RoboGuice;
 
 public class AuthorLayoutViewHolder {
-
-    LoginPrefs loginPrefs;
+    @Inject
+    private LoginPrefs loginPrefs;
 
     public final ViewGroup profileRow;
     public final ImageView profileImageView;
@@ -43,8 +43,7 @@ public class AuthorLayoutViewHolder {
         final Context context = answerTextView.getContext();
         UiUtils.INSTANCE.setTextViewDrawableStart(context, answerTextView, R.drawable.ic_verified,
                 R.dimen.edx_base, R.color.successLight);
-        loginPrefs = EntryPointAccessors.fromApplication(context,
-                EdxDefaultModule.ProviderEntryPoint.class).getLoginPrefs();
+        RoboGuice.getInjector(context).injectMembers(this);
     }
 
     public void populateViewHolder(@NonNull Config config, @NonNull IAuthorData authorData,

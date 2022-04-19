@@ -2,13 +2,14 @@ package org.edx.mobile.view.dialog;
 
 import android.app.Activity;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
@@ -22,14 +23,12 @@ import org.edx.mobile.view.adapters.FindCoursesListAdapter;
 import org.edx.mobile.view.adapters.InfiniteScrollUtils;
 import org.edx.mobile.view.common.TaskMessageCallback;
 
-import javax.inject.Inject;
-
 import retrofit2.Call;
 
 public class NativeFindCoursesFragment extends BaseFragment {
 
     @Inject
-    CourseAPI courseAPI;
+    private CourseAPI courseAPI;
 
     @Inject
     IEdxEnvironment environment;

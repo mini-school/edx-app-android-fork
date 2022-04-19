@@ -55,9 +55,9 @@
 
         </LinearLayout>
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
+        <ProgressBar
             android:id="@+id/progressBar"
-            style="@style/custom_horizontal_progress"
+            style="@style/CustomProgressBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/widget_margin_half"

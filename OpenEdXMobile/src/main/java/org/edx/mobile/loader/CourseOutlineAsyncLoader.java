@@ -5,24 +5,23 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.loader.content.AsyncTaskLoader;
 
-import org.edx.mobile.core.EdxDefaultModule;
+import com.google.inject.Inject;
+
 import org.edx.mobile.model.course.CourseComponent;
 import org.edx.mobile.services.CourseManager;
 
-import dagger.hilt.android.EntryPointAccessors;
+import roboguice.RoboGuice;
 
 public class CourseOutlineAsyncLoader extends AsyncTaskLoader<AsyncTaskResult<CourseComponent>> {
-
     private final String blocksApiVersion;
     private final String courseId;
     private AsyncTaskResult<CourseComponent> data;
-
-    private final CourseManager courseManager;
+    @Inject
+    private CourseManager courseManager;
 
     public CourseOutlineAsyncLoader(@NonNull Context context, @NonNull String blocksApiVersion, @NonNull String courseId) {
         super(context);
-        this.courseManager = EntryPointAccessors.fromApplication(context,
-                EdxDefaultModule.ProviderEntryPoint.class).getCourseManager();
+        RoboGuice.injectMembers(context, this);
         this.blocksApiVersion = blocksApiVersion;
         this.courseId = courseId;
     }

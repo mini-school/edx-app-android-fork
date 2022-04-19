@@ -5,11 +5,14 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.base.BaseFragmentActivity;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.databinding.ActivityCourseBaseBinding;
 import org.edx.mobile.http.notifications.FullScreenErrorNotification;
 import org.edx.mobile.interfaces.RefreshListener;
+import org.edx.mobile.mediation.Adverts;
 import org.edx.mobile.model.api.CourseUpgradeResponse;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
 import org.edx.mobile.model.course.BlockPath;
@@ -19,8 +22,6 @@ import org.edx.mobile.services.CourseManager;
 import org.edx.mobile.util.Config;
 import org.edx.mobile.view.common.MessageType;
 import org.edx.mobile.view.common.TaskProcessCallback;
-
-import javax.inject.Inject;
 
 import retrofit2.Call;
 
@@ -71,6 +72,11 @@ public abstract class CourseBaseActivity extends BaseFragmentActivity
                 bundle = getIntent().getBundleExtra(Router.EXTRA_BUNDLE);
         }
         restore(bundle);
+
+        Adverts adverts;
+        adverts = new Adverts();
+        adverts.loadBannerAd();
+        adverts.loadNativeAd();
     }
 
     @Override

@@ -2,9 +2,6 @@ package org.edx.mobile.view;
 
 import org.edx.mobile.R;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class WebViewDiscoverProgramsFragment extends WebViewDiscoverFragment {
     @Override
     protected String getSearchUrl() {

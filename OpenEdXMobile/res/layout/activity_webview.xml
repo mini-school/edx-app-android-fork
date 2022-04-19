@@ -20,7 +20,12 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/widget_margin"
             android:layout_marginEnd="@dimen/widget_margin"
-            android:background="@color/neutralLight" />
+            android:background="@color/neutralLight">
+
+            <include layout="@layout/activity_banner_ads" />
+            <include layout="@layout/activity_native_ad" />
+
+        </org.edx.mobile.view.custom.EdxWebView>
 
         <include layout="@layout/loading_indicator" />
 

@@ -7,14 +7,14 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import androidx.annotation.NonNull;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+import com.google.inject.Inject;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
-import org.edx.mobile.base.MainApplication;
 
 import java.util.List;
 
@@ -27,6 +27,9 @@ public final class AppStoreUtils {
         throw new UnsupportedOperationException();
     }
 
+    @Inject
+    private static Config config;
+
     /**
      * @param context A Context to query the applications info.
      *
@@ -36,7 +39,7 @@ public final class AppStoreUtils {
         final Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addCategory(Intent.CATEGORY_BROWSABLE);
         final PackageManager packageManager = context.getPackageManager();
-        for (final Uri uri : MainApplication.getEnvironment(context).getConfig().getAppStoreUris()) {
+        for (final Uri uri : config.getAppStoreUris()) {
             intent.setData(uri);
             if (intent.resolveActivity(packageManager) != null) {
                 return true;
@@ -58,7 +61,7 @@ public final class AppStoreUtils {
          */
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        final List<Uri> uris = MainApplication.getEnvironment(context).getConfig().getAppStoreUris();
+        final List<Uri> uris = config.getAppStoreUris();
         if (uris.isEmpty()) return;
 
         /* Try to resolve the app store that was initially used to

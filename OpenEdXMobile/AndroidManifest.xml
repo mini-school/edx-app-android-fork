@@ -22,6 +22,9 @@
     <!-- Required by app for capturing image -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Required by app for capturing audio -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- Sticky broadcast passing a message from one screen and display on another -->
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
@@ -389,6 +392,11 @@
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="org.edx.mobile.googlecast.CastOptionsProvider" />
+
+        <!--Google AdMob Mediation-->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2927782700195961~1867074264" />
 
     </application>
 

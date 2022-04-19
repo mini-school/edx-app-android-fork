@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 
 import com.bumptech.glide.Glide;
-import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textview.MaterialTextView;
@@ -581,7 +580,6 @@ public class CourseOutlineAdapter extends BaseAdapter {
                 row.bulkDownloadLoading.setTag(DownloadEntry.DownloadedState.DOWNLOADING);
                 row.bulkDownload.setVisibility(View.GONE);
                 row.downloadBackground.setVisibility(View.GONE);
-                row.bulkDownloadLoading.setContentDescription(state.toString());
                 break;
             case DOWNLOADED:
                 row.bulkDownloadLoading.setVisibility(View.GONE);
@@ -626,7 +624,6 @@ public class CourseOutlineAdapter extends BaseAdapter {
         final View upgradeBtn = view.findViewById(R.id.layout_upgrade_btn);
         final MaterialButton upgradeBtnText = upgradeBtn.findViewById(R.id.btn_upgrade);
 
-        ((ShimmerFrameLayout) upgradeBtn).hideShimmer();
         upgradeBtn.setVisibility(courseData.getMode().equalsIgnoreCase(EnrollmentMode.AUDIT
                 .toString()) ? View.VISIBLE : View.GONE);
 

@@ -11,6 +11,8 @@ import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.event.EnrolledInCourseEvent;
 import org.edx.mobile.event.NetworkConnectivityChangeEvent;
@@ -21,16 +23,12 @@ import org.edx.mobile.util.UiUtils;
 import org.edx.mobile.util.links.DefaultActionListener;
 import org.edx.mobile.view.custom.URLInterceptorWebViewClient;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 
-@AndroidEntryPoint
 public class WebViewProgramFragment extends AuthenticatedWebViewFragment {
 
     @Inject
-    IEdxEnvironment environment;
+    private IEdxEnvironment environment;
 
     private ViewTreeObserver.OnScrollChangedListener onScrollChangedListener;
     private boolean refreshOnResume = false;

@@ -1,36 +1,28 @@
 /**
- * Copyright (c) 2015 Qualcomm Education, Inc.
- * All rights reserved.
- * <p>
- * <p>
- * Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
- * <p>
+ Copyright (c) 2015 Qualcomm Education, Inc.
+ All rights reserved.
+
+
+ Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
+
  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- * <p>
+
  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
- * <p>
+
  * Neither the name of Qualcomm Education, Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
- * <p>
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **/
 
 package org.edx.mobile.discussion;
 
-import static org.edx.mobile.http.constants.ApiConstants.PARAM_PAGE_SIZE;
-
-import androidx.annotation.NonNull;
+import com.google.inject.Inject;
 
 import org.edx.mobile.http.provider.RetrofitProvider;
 import org.edx.mobile.model.Page;
 
 import java.util.List;
 
-import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
-import dagger.hilt.InstallIn;
-import dagger.hilt.components.SingletonComponent;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -40,17 +32,18 @@ import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
+import static org.edx.mobile.http.constants.ApiConstants.PARAM_PAGE_SIZE;
+
 public interface DiscussionService {
     /**
-     * A Provider implementation for DiscussionService.
+     * A RoboGuice Provider implementation for DiscussionService.
      */
-    @Module
-    @InstallIn(SingletonComponent.class)
-    class Provider {
+    class Provider implements com.google.inject.Provider<DiscussionService> {
+        @Inject
+        private RetrofitProvider retrofitProvider;
 
-        @Singleton
-        @Provides
-        public DiscussionService get(@NonNull RetrofitProvider retrofitProvider) {
+        @Override
+        public DiscussionService get() {
             return retrofitProvider.getWithOfflineCache().create(DiscussionService.class);
         }
     }
@@ -86,7 +79,7 @@ public interface DiscussionService {
                                                         @Query("order_by") String orderBy,
                                                         @Query("page") int page,
                                                         @Query("requested_fields")
-                                                                List<String> requestedFields);
+                                                        List<String> requestedFields);
 
     @Headers("Cache-Control: no-cache")
     @GET("/api/discussion/v1/threads?" + PARAM_PAGE_SIZE)
@@ -111,7 +104,7 @@ public interface DiscussionService {
                                                               @Query("page") int page,
                                                               @Query("endorsed") boolean endorsed,
                                                               @Query("requested_fields")
-                                                                      List<String> requestedFields);
+                                                              List<String> requestedFields);
 
     @Headers("Cache-Control: no-cache")
     @GET("/api/discussion/v1/comments/{comment_id}?" + PARAM_PAGE_SIZE)

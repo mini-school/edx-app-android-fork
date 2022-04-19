@@ -1,19 +1,17 @@
 package org.edx.mobile.http.interceptor;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 
-import org.edx.mobile.core.EdxDefaultModule;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.module.prefs.LoginPrefs;
 
 import java.io.IOException;
 
-import dagger.hilt.android.EntryPointAccessors;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import roboguice.RoboGuice;
 
 /**
  * Injects OAuth token - if present - into Authorization header
@@ -21,15 +19,14 @@ import okhttp3.Response;
 public final class OauthHeaderRequestInterceptor implements Interceptor {
     protected final Logger logger = new Logger(getClass().getName());
 
+    @NonNull
     private final LoginPrefs loginPrefs;
 
-    public OauthHeaderRequestInterceptor(Context context) {
-        loginPrefs = EntryPointAccessors
-                .fromApplication(context, EdxDefaultModule.ProviderEntryPoint.class).getLoginPrefs();
+    public OauthHeaderRequestInterceptor(@NonNull Context context) {
+        loginPrefs = RoboGuice.getInjector(context).getInstance(LoginPrefs.class);
     }
 
     @Override
-    @NonNull
     public Response intercept(Chain chain) throws IOException {
         final Request.Builder builder = chain.request().newBuilder();
         final String token = loginPrefs.getAuthorizationHeader();

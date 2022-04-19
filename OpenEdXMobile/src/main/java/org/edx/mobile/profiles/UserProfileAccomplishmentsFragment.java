@@ -1,18 +1,19 @@
 package org.edx.mobile.profiles;
 
+import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
-import androidx.databinding.DataBindingUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import com.google.inject.Injector;
 
 import org.edx.mobile.R;
-import org.edx.mobile.base.MainApplication;
+import org.edx.mobile.core.EdxEnvironment;
 import org.edx.mobile.databinding.FragmentUserProfileAccomplishmentsBinding;
 import org.edx.mobile.module.prefs.UserPrefs;
 import org.edx.mobile.user.UserService;
@@ -24,19 +25,9 @@ import org.edx.mobile.view.adapters.InfiniteScrollUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.inject.Inject;
+import roboguice.RoboGuice;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class UserProfileAccomplishmentsFragment extends PresenterFragment<UserProfileAccomplishmentsPresenter, UserProfileAccomplishmentsPresenter.ViewInterface> implements ScrollingPreferenceChild {
-
-    @Inject
-    UserService userService;
-
-    @Inject
-    UserPrefs userPrefs;
-
 
     @Nullable
     @Override
@@ -47,8 +38,10 @@ public class UserProfileAccomplishmentsFragment extends PresenterFragment<UserPr
     @NonNull
     @Override
     protected UserProfileAccomplishmentsPresenter createPresenter() {
+        final Injector injector = RoboGuice.getInjector(getActivity());
         return new UserProfileAccomplishmentsPresenter(
-                userService, userPrefs,
+                injector.getInstance(UserService.class),
+                injector.getInstance(UserPrefs.class),
                 ((UserProfileBioTabParent) getParentFragment()).getBioInteractor().getUsername());
     }
 
@@ -95,7 +88,7 @@ public class UserProfileAccomplishmentsFragment extends PresenterFragment<UserPr
     @VisibleForTesting
     protected AccomplishmentListAdapter createAdapter(@NonNull AccomplishmentListAdapter.Listener listener) {
         return new AccomplishmentListAdapter(
-                MainApplication.getEnvironment(getContext()).getConfig().getApiHostURL(),
+                RoboGuice.getInjector(getContext()).getInstance(EdxEnvironment.class).getConfig().getApiHostURL(),
                 listener);
     }
 

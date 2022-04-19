@@ -1,9 +1,8 @@
 package org.edx.mobile.view;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.activity.ComponentActivity;
 
 import org.edx.mobile.base.MainApplication;
 import org.edx.mobile.core.IEdxEnvironment;
@@ -13,17 +12,12 @@ import org.edx.mobile.logger.Logger;
 import org.edx.mobile.util.Config;
 import org.edx.mobile.util.NetworkUtil;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import io.branch.referral.Branch;
 
-@AndroidEntryPoint
-public class SplashActivity extends ComponentActivity {
+// We are extending the normal Activity class here so that we can use Theme.NoDisplay, which does not support AppCompat activities
+public class SplashActivity extends Activity {
     protected final Logger logger = new Logger(getClass().getName());
-
-    @Inject
-    Config config;
+    private Config config = new Config(MainApplication.instance());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +81,6 @@ public class SplashActivity extends ComponentActivity {
 
     @Override
     public void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
         this.setIntent(intent);
     }
 }

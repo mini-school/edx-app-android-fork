@@ -1,7 +1,6 @@
 package org.edx.mobile.view;
 
 import android.os.Bundle;
-
 import androidx.fragment.app.Fragment;
 
 import org.edx.mobile.R;
@@ -9,9 +8,6 @@ import org.edx.mobile.base.BaseSingleFragmentActivity;
 import org.edx.mobile.base.WebViewCourseInfoFragment;
 import org.edx.mobile.module.analytics.Analytics;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class CourseInfoActivity extends BaseSingleFragmentActivity {
 
     @Override

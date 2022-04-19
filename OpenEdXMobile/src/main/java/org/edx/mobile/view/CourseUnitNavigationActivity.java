@@ -19,6 +19,8 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.course.CourseAPI;
 import org.edx.mobile.databinding.ViewCourseUnitPagerBinding;
@@ -27,6 +29,7 @@ import org.edx.mobile.event.FileSelectionEvent;
 import org.edx.mobile.event.VideoPlaybackEvent;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.logger.Logger;
+import org.edx.mobile.mediation.Adverts;
 import org.edx.mobile.model.course.BlockType;
 import org.edx.mobile.model.course.CourseComponent;
 import org.edx.mobile.model.course.CourseStatus;
@@ -45,13 +48,9 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 import retrofit2.Call;
 
-@AndroidEntryPoint
 public class CourseUnitNavigationActivity extends CourseBaseActivity implements
         BaseCourseUnitVideoFragment.HasComponent, PreLoadingListener {
     protected Logger logger = new Logger(getClass().getSimpleName());
@@ -63,7 +62,7 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
     private CourseUnitPagerAdapter pagerAdapter;
 
     @Inject
-    CourseAPI courseApi;
+    private CourseAPI courseApi;
 
     private PreLoadingListener.State viewPagerState = PreLoadingListener.State.DEFAULT;
 
@@ -84,6 +83,7 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
         pagerAdapter = new CourseUnitPagerAdapter(this, environment.getConfig(),
                 unitList, courseData, courseUpgradeData, this);
         pager2.setAdapter(pagerAdapter);
+        pager2.setUserInputEnabled(false);
         pager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -94,10 +94,10 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
             public void onPageSelected(int position) {
                 if (pagerAdapter.getUnit(position).isMultiDevice()) {
                     // Disable ViewPager2 scrolling to enable horizontal scrolling to for the WebView (Specific HTML Components).
-                    List<BlockType> horizontalBlocks = Arrays.asList(
-                            BlockType.DRAG_AND_DROP_V2, BlockType.LTI_CONSUMER, BlockType.WORD_CLOUD);
-                    pager2.setUserInputEnabled(!horizontalBlocks
-                            .contains(pagerAdapter.getUnit(position).getType()));
+//                    List<BlockType> horizontalBlocks = Arrays.asList(
+//                            BlockType.DRAG_AND_DROP_V2, BlockType.LTI_CONSUMER, BlockType.WORD_CLOUD);
+//                    pager2.setUserInputEnabled(!horizontalBlocks
+//                            .contains(pagerAdapter.getUnit(position).getType()));
                 }
             }
 
@@ -121,6 +121,11 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
         if (!isVideoMode) {
             getCourseCelebrationStatus();
         }
+
+        Adverts adverts;
+        adverts = new Adverts();
+        adverts.loadInterstitialAd();
+        adverts.loadRewardedVideoAd();
     }
 
     private void getCourseCelebrationStatus() {
@@ -194,6 +199,9 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
         int index = pager2.getCurrentItem();
         if (index > 0) {
             pager2.setCurrentItem(index - 1);
+            Adverts adverts;
+            adverts = new Adverts();
+            adverts.showInterstitialAd();
         }
     }
 
@@ -202,6 +210,9 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
         int index = pager2.getCurrentItem();
         if (index < pagerAdapter.getItemCount() - 1) {
             pager2.setCurrentItem(index + 1);
+            Adverts adverts;
+            adverts = new Adverts();
+            adverts.showRewardedVideoAd();
         }
         // CourseComponent#getAncestor(2) returns the section of a component
         CourseComponent currentBlockSection = selectedUnit.getAncestor(2);

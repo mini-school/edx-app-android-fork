@@ -20,6 +20,7 @@ import java.io.IOException;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import roboguice.RoboGuice;
 
 /**
  * Generic abstract implementation of Retrofit's
@@ -37,7 +38,7 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      * A Context for resolving the error message strings.
      */
     @NonNull
-    protected final Context context;
+    private final Context context;
 
     /**
      * The callback to invoke on start and finish of the request.
@@ -185,6 +186,8 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
         this.errorNotification = errorNotification;
         this.snackbarErrorNotification = snackbarErrorNotification;
         this.refreshListener = refreshListener;
+        // For the convenience of subclasses
+        RoboGuice.injectMembers(context, this);
         if (progressCallback != null) {
             progressCallback.startProcess();
         }

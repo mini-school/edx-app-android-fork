@@ -1,8 +1,5 @@
 package org.edx.mobile.view;
 
-import static org.edx.mobile.view.Router.EXTRA_PATH_ID;
-import static org.edx.mobile.view.Router.EXTRA_SCREEN_NAME;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,9 +15,9 @@ import org.edx.mobile.R;
 import org.edx.mobile.base.BaseSingleFragmentActivity;
 import org.edx.mobile.module.analytics.Analytics;
 
-import dagger.hilt.android.AndroidEntryPoint;
+import static org.edx.mobile.view.Router.EXTRA_PATH_ID;
+import static org.edx.mobile.view.Router.EXTRA_SCREEN_NAME;
 
-@AndroidEntryPoint
 public class DiscoveryActivity extends BaseSingleFragmentActivity implements ToolbarCallbacks {
     public static Intent newIntent(@NonNull Context context) {
         return new Intent(context, DiscoveryActivity.class);

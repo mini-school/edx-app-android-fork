@@ -1,12 +1,5 @@
 package org.edx.mobile.view;
 
-import static org.edx.mobile.view.Router.EXTRA_BUNDLE;
-import static org.edx.mobile.view.Router.EXTRA_COURSE_COMPONENT_ID;
-import static org.edx.mobile.view.Router.EXTRA_COURSE_DATA;
-import static org.edx.mobile.view.Router.EXTRA_COURSE_UPGRADE_DATA;
-import static org.edx.mobile.view.Router.EXTRA_IS_VIDEOS_MODE;
-import static org.edx.mobile.view.Router.EXTRA_LAST_ACCESSED_ID;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,9 +12,13 @@ import org.edx.mobile.model.api.CourseUpgradeResponse;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
 import org.edx.mobile.module.analytics.Analytics;
 
-import dagger.hilt.android.AndroidEntryPoint;
+import static org.edx.mobile.view.Router.EXTRA_BUNDLE;
+import static org.edx.mobile.view.Router.EXTRA_COURSE_COMPONENT_ID;
+import static org.edx.mobile.view.Router.EXTRA_COURSE_DATA;
+import static org.edx.mobile.view.Router.EXTRA_COURSE_UPGRADE_DATA;
+import static org.edx.mobile.view.Router.EXTRA_IS_VIDEOS_MODE;
+import static org.edx.mobile.view.Router.EXTRA_LAST_ACCESSED_ID;
 
-@AndroidEntryPoint
 public class CourseOutlineActivity extends BaseSingleFragmentActivity {
 
     private Bundle courseBundle;

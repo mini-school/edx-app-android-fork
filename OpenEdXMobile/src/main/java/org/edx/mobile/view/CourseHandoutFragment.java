@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
@@ -29,25 +31,21 @@ import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.WebViewUtil;
 import org.edx.mobile.view.custom.URLInterceptorWebViewClient;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import de.greenrobot.event.EventBus;
 import okhttp3.Request;
 
-@AndroidEntryPoint
 public class CourseHandoutFragment extends BaseFragment implements RefreshListener {
 
     protected final Logger logger = new Logger(getClass().getName());
 
     @Inject
-    AnalyticsRegistry analyticsRegistry;
+    private AnalyticsRegistry analyticsRegistry;
 
     @Inject
-    IEdxEnvironment environment;
+    private IEdxEnvironment environment;
 
     @Inject
-    OkHttpClientProvider okHttpClientProvider;
+    private OkHttpClientProvider okHttpClientProvider;
 
     private EnrolledCoursesResponse courseData;
     private FullScreenErrorNotification errorNotification;
@@ -74,8 +72,7 @@ public class CourseHandoutFragment extends BaseFragment implements RefreshListen
         super.onViewCreated(view, savedInstanceState);
         errorNotification = new FullScreenErrorNotification(binding.webview);
         snackbarErrorNotification = new SnackbarErrorNotification(binding.webview);
-        new URLInterceptorWebViewClient(requireActivity(), binding.webview, false, null)
-                .setAllLinksAsExternal(true);
+        new URLInterceptorWebViewClient(requireActivity(), binding.webview, false, null).setAllLinksAsExternal(true);
         loadData();
     }
 

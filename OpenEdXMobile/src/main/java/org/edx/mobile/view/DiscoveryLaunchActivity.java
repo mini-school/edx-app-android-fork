@@ -1,12 +1,11 @@
 package org.edx.mobile.view;
 
+import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
-import androidx.databinding.DataBindingUtil;
+import android.view.View;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
@@ -14,9 +13,6 @@ import org.edx.mobile.databinding.ActivityDiscoveryLaunchBinding;
 import org.edx.mobile.module.analytics.Analytics;
 import org.edx.mobile.util.SoftKeyboardUtil;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class DiscoveryLaunchActivity extends PresenterActivity<DiscoveryLaunchPresenter, DiscoveryLaunchPresenter.ViewInterface> {
 
     private ActivityDiscoveryLaunchBinding binding;

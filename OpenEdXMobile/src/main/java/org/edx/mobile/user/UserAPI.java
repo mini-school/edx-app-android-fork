@@ -6,7 +6,9 @@ import android.webkit.MimeTypeMap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.edx.mobile.core.EdxDefaultModule;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.edx.mobile.event.AccountDataLoadedEvent;
 import org.edx.mobile.http.callback.CallTrigger;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
@@ -17,29 +19,20 @@ import org.edx.mobile.view.common.TaskProgressCallback;
 
 import java.io.File;
 
-import javax.inject.Inject;
-
-import dagger.Module;
-import dagger.hilt.InstallIn;
-import dagger.hilt.android.EntryPointAccessors;
-import dagger.hilt.components.SingletonComponent;
 import de.greenrobot.event.EventBus;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 
-@Module
-@InstallIn(SingletonComponent.class)
+@Singleton
 public class UserAPI {
-
     @Inject
-    UserService userService;
+    private UserService userService;
 
-    @Module
-    @InstallIn(SingletonComponent.class)
     public static class AccountDataUpdatedCallback extends ErrorHandlingCallback<Account> {
-
+        @Inject
+        private LoginPrefs loginPrefs;
         @NonNull
         private final String username;
 
@@ -70,14 +63,9 @@ public class UserAPI {
 
         @Override
         protected void onResponse(@NonNull final Account account) {
-
-            LoginPrefs loginPrefs = EntryPointAccessors.fromApplication(context,
-                    EdxDefaultModule.ProviderEntryPoint.class).getLoginPrefs();
             // Store the logged in user Info for Profile Screen
-            if (account.getEmail() != null) {
-                loginPrefs.setUserInfo(username, account.getEmail(), account.getProfileImage(),
-                        !account.requiresParentalConsent() && account.getAccountPrivacy() == Account.Privacy.PRIVATE);
-            }
+            loginPrefs.setUserInfo(username, account.getEmail(), account.getProfileImage(),
+                    !account.requiresParentalConsent() && account.getAccountPrivacy() == Account.Privacy.PRIVATE);
             EventBus.getDefault().post(new AccountDataLoadedEvent(account));
         }
     }

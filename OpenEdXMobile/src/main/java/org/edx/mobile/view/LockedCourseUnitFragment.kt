@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
-import dagger.hilt.android.AndroidEntryPoint
+import com.google.inject.Inject
 import org.edx.mobile.R
 import org.edx.mobile.databinding.FragmentLockedCourseUnitBinding
 import org.edx.mobile.model.api.CourseUpgradeResponse
@@ -13,21 +13,16 @@ import org.edx.mobile.model.api.EnrolledCoursesResponse
 import org.edx.mobile.model.course.CourseComponent
 import org.edx.mobile.module.analytics.Analytics
 import org.edx.mobile.module.analytics.AnalyticsRegistry
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class LockedCourseUnitFragment : CourseUnitFragment() {
-
     @Inject
-    lateinit var analyticsRegistry: AnalyticsRegistry
+    var analyticsRegistry: AnalyticsRegistry? = null
 
     companion object {
         @JvmStatic
-        fun newInstance(
-            unit: CourseComponent,
-            courseData: EnrolledCoursesResponse,
-            courseUpgradeData: CourseUpgradeResponse
-        ): LockedCourseUnitFragment {
+        fun newInstance(unit: CourseComponent,
+                        courseData: EnrolledCoursesResponse,
+                        courseUpgradeData: CourseUpgradeResponse): LockedCourseUnitFragment {
             val fragment = LockedCourseUnitFragment()
             val bundle = Bundle()
             bundle.putSerializable(Router.EXTRA_COURSE_UNIT, unit)
@@ -38,37 +33,24 @@ class LockedCourseUnitFragment : CourseUnitFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
         val binding: FragmentLockedCourseUnitBinding =
-            DataBindingUtil.inflate(
-                inflater,
-                R.layout.fragment_locked_course_unit,
-                container,
-                false
-            )
+                DataBindingUtil.inflate(inflater, R.layout.fragment_locked_course_unit, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val courseUpgradeData =
-            arguments?.getParcelable<CourseUpgradeResponse>(Router.EXTRA_COURSE_UPGRADE_DATA) as CourseUpgradeResponse
-        val courseData =
-            arguments?.getSerializable(Router.EXTRA_COURSE_DATA) as EnrolledCoursesResponse
+        val courseUpgradeData = arguments?.getParcelable<CourseUpgradeResponse>(Router.EXTRA_COURSE_UPGRADE_DATA) as CourseUpgradeResponse
+        val courseData = arguments?.getSerializable(Router.EXTRA_COURSE_DATA) as EnrolledCoursesResponse
         loadPaymentBannerFragment(courseData, courseUpgradeData)
-        analyticsRegistry.trackScreenView(Analytics.Screens.COURSE_UNIT_LOCKED)
+        analyticsRegistry?.trackScreenView(Analytics.Screens.COURSE_UNIT_LOCKED)
     }
 
-    private fun loadPaymentBannerFragment(
-        courseData: EnrolledCoursesResponse,
-        courseUpgradeData: CourseUpgradeResponse
-    ) {
-        PaymentsBannerFragment.loadPaymentsBannerFragment(
-            R.id.fragment_container, courseData, unit,
-            courseUpgradeData, false, childFragmentManager, false
-        )
+    private fun loadPaymentBannerFragment(courseData: EnrolledCoursesResponse,
+                                          courseUpgradeData: CourseUpgradeResponse) {
+        PaymentsBannerFragment.loadPaymentsBannerFragment(R.id.fragment_container, courseData, unit,
+                courseUpgradeData, false, childFragmentManager, false)
     }
 }

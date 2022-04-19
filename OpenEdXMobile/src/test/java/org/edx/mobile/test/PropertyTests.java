@@ -1,7 +1,6 @@
 package org.edx.mobile.test;
 
 import org.edx.mobile.BuildConfig;
-import org.edx.mobile.base.BaseTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

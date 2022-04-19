@@ -1,13 +1,12 @@
 package org.edx.mobile.profiles;
 
+import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
 
 import org.edx.mobile.R;
 import org.edx.mobile.databinding.FragmentUserProfileBioBinding;
@@ -18,9 +17,6 @@ import org.edx.mobile.view.Router;
 
 import javax.inject.Inject;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class UserProfileBioFragment extends PresenterFragment<UserProfileBioPresenter, UserProfileBioPresenter.ViewInterface> implements ScrollingPreferenceChild {
 
     private final Logger logger = new Logger(getClass().getName());
@@ -43,7 +39,7 @@ public class UserProfileBioFragment extends PresenterFragment<UserProfileBioPres
     @Override
     protected UserProfileBioPresenter createPresenter() {
         Fragment parent = getParentFragment();
-        UserProfileBioTabParent owner = (UserProfileBioTabParent) parent;
+        UserProfileBioTabParent owner = (UserProfileBioTabParent)parent;
 
         return new UserProfileBioPresenter(owner.getBioInteractor());
     }
@@ -72,7 +68,7 @@ public class UserProfileBioFragment extends PresenterFragment<UserProfileBioPres
                 viewHolder.bioText.setText(bio.bioText);
                 viewHolder.bioText.setContentDescription(ResourceUtil.getFormattedString(getResources(), R.string.profile_about_me_description, "about_me", bio.bioText));
                 prefersScrollingHeader = bio.contentType == UserProfileBioModel.ContentType.ABOUT_ME;
-                ((ScrollingPreferenceParent) getParentFragment()).onChildScrollingPreferenceChanged();
+                ((ScrollingPreferenceParent)getParentFragment()).onChildScrollingPreferenceChanged();
             }
 
             @Override

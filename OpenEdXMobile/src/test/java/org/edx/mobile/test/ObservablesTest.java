@@ -3,7 +3,6 @@ package org.edx.mobile.test;
 
 import androidx.annotation.NonNull;
 
-import org.edx.mobile.base.BaseTestCase;
 import org.edx.mobile.util.observer.BasicObservable;
 import org.edx.mobile.util.observer.Func1;
 import org.edx.mobile.util.observer.Observable;

@@ -1,19 +1,15 @@
 package org.edx.mobile.view;
 
-import static org.edx.mobile.util.UrlUtil.QUERY_PARAM_SEARCH;
-import static org.edx.mobile.util.UrlUtil.buildUrlWithQueryParams;
-
+import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
-import androidx.databinding.DataBindingUtil;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
@@ -30,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
+
+import static org.edx.mobile.util.UrlUtil.QUERY_PARAM_SEARCH;
+import static org.edx.mobile.util.UrlUtil.buildUrlWithQueryParams;
 
 /**
  * An abstract fragment providing basic functionality of searching the webpage via toolbar searchview.

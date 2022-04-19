@@ -12,6 +12,8 @@ import android.widget.SearchView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.databinding.FragmentDiscussionSearchPostsBinding;
 import org.edx.mobile.discussion.DiscussionRequestFields;
@@ -34,24 +36,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import retrofit2.Call;
 
-@AndroidEntryPoint
 public class CourseDiscussionPostsSearchFragment extends CourseDiscussionPostsBaseFragment {
 
     @Inject
-    DiscussionService discussionService;
+    private DiscussionService discussionService;
 
     private String searchQuery;
     private Call<Page<DiscussionThread>> searchThreadListCall;
     private FragmentDiscussionSearchPostsBinding binding;
-
-    @Inject
-    public CourseDiscussionPostsSearchFragment() {
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

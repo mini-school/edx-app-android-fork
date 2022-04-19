@@ -7,6 +7,9 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.video.VideoQuality;
 import org.edx.mobile.util.AnalyticsUtils;
@@ -15,18 +18,11 @@ import org.edx.mobile.util.images.ShareUtils;
 
 import java.util.Map;
 
-import javax.inject.Inject;
-
-import dagger.Module;
-import dagger.hilt.InstallIn;
-import dagger.hilt.android.qualifiers.ApplicationContext;
-import dagger.hilt.components.SingletonComponent;
 
 /**
  * A concrete implementation of {@link Analytics} to report all the screens and events to Firebase.
  */
-@Module
-@InstallIn(SingletonComponent.class)
+@Singleton
 public class FirebaseAnalytics implements Analytics {
 
     protected final Logger logger = new Logger(getClass().getName());
@@ -34,7 +30,7 @@ public class FirebaseAnalytics implements Analytics {
     private com.google.firebase.analytics.FirebaseAnalytics tracker;
 
     @Inject
-    public FirebaseAnalytics(@ApplicationContext @NonNull Context context) {
+    public FirebaseAnalytics(@NonNull Context context) {
         tracker = com.google.firebase.analytics.FirebaseAnalytics.getInstance(context);
     }
 

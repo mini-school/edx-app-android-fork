@@ -2,18 +2,17 @@ package org.edx.mobile.view.adapters;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import androidx.annotation.ColorInt;
+import androidx.core.content.ContextCompat;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
-import androidx.annotation.ColorInt;
-import androidx.core.content.ContextCompat;
+import com.google.inject.Inject;
 
 import org.edx.mobile.R;
 import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.util.TextUtils;
-
-import javax.inject.Inject;
 
 import subtitleFile.Caption;
 

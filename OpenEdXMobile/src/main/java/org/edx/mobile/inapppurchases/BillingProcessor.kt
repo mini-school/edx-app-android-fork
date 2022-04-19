@@ -82,7 +82,7 @@ class BillingProcessor(val context: Context, val listener: BillingFlowListeners?
         if (purchases != null && !purchases[0].isAcknowledged) {
             acknowledgePurchase(purchases[0])
         } else if (purchases == null) {
-            listener?.onPurchaseCancel(billingResult.responseCode, billingResult.debugMessage)
+            listener?.onPurchaseCancel()
         }
     }
 
@@ -161,7 +161,7 @@ class BillingProcessor(val context: Context, val listener: BillingFlowListeners?
      * @param productId SKU of the product
      * @param listener [SkuDetailsResponseListener]
      * */
-    fun querySyncDetails(productId: String, listener: SkuDetailsResponseListener) {
+    private fun querySyncDetails(productId: String, listener: SkuDetailsResponseListener) {
         billingClient.querySkuDetailsAsync(
             SkuDetailsParams.newBuilder()
                 .setType(BillingClient.SkuType.INAPP)
@@ -182,7 +182,7 @@ class BillingProcessor(val context: Context, val listener: BillingFlowListeners?
 
         fun onBillingSetupFinished(billingResult: BillingResult) {}
 
-        fun onPurchaseCancel(responseCode: Int, message: String)
+        fun onPurchaseCancel()
 
         fun onPurchaseComplete(purchase: Purchase)
     }

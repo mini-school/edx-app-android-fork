@@ -12,9 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.inject.Inject;
+
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
-import org.edx.mobile.core.EdxDefaultModule;
 import org.edx.mobile.discussion.DiscussionComment;
 import org.edx.mobile.discussion.DiscussionService;
 import org.edx.mobile.discussion.DiscussionService.FlagBody;
@@ -38,14 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.EntryPointAccessors;
-import dagger.hilt.android.qualifiers.ActivityContext;
-import dagger.hilt.android.scopes.FragmentScoped;
 import de.greenrobot.event.EventBus;
+import roboguice.RoboGuice;
 
-@FragmentScoped
 public class CourseDiscussionResponsesAdapter extends RecyclerView.Adapter implements InfiniteScrollUtils.ListContentController<DiscussionComment> {
 
     public interface Listener {
@@ -56,11 +52,14 @@ public class CourseDiscussionResponsesAdapter extends RecyclerView.Adapter imple
         void onClickViewComments(@NonNull DiscussionComment comment);
     }
 
-    Config config;
+    @Inject
+    private Config config;
 
-    DiscussionService discussionService;
+    @Inject
+    private DiscussionService discussionService;
 
-    LoginPrefs loginPrefs;
+    @Inject
+    private LoginPrefs loginPrefs;
 
     @NonNull
     private final Context context;
@@ -89,8 +88,7 @@ public class CourseDiscussionResponsesAdapter extends RecyclerView.Adapter imple
         static final int PROGRESS = 2;
     }
 
-    @Inject
-    public CourseDiscussionResponsesAdapter(@ActivityContext @NonNull Context context,
+    public CourseDiscussionResponsesAdapter(@NonNull Context context,
                                             @NonNull BaseFragment baseFragment,
                                             @NonNull Listener listener,
                                             @NonNull DiscussionThread discussionThread,
@@ -100,10 +98,7 @@ public class CourseDiscussionResponsesAdapter extends RecyclerView.Adapter imple
         this.discussionThread = discussionThread;
         this.listener = listener;
         this.courseData = courseData;
-        EdxDefaultModule.ProviderEntryPoint provider = EntryPointAccessors.fromApplication(context, EdxDefaultModule.ProviderEntryPoint.class);
-        this.config = provider.getEnvironment().getConfig();
-        this.discussionService = provider.getDiscussionService();
-        this.loginPrefs = provider.getLoginPrefs();
+        RoboGuice.getInjector(context).injectMembers(this);
     }
 
     @Override

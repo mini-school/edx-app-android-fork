@@ -5,15 +5,15 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.annotations.SerializedName;
+import com.google.inject.Inject;
 
 import org.edx.mobile.event.EnrolledInCourseEvent;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.http.provider.RetrofitProvider;
 import org.edx.mobile.model.Page;
-import org.edx.mobile.model.api.CourseComponentStatusResponse;
 import org.edx.mobile.model.api.CourseUpgradeResponse;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
+import org.edx.mobile.model.api.CourseComponentStatusResponse;
 import org.edx.mobile.model.course.CourseBannerInfoModel;
 import org.edx.mobile.model.course.CourseDates;
 import org.edx.mobile.model.course.CourseStatus;
@@ -25,12 +25,6 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
-import dagger.hilt.InstallIn;
-import dagger.hilt.components.SingletonComponent;
 import de.greenrobot.event.EventBus;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -44,15 +38,14 @@ import retrofit2.http.Query;
 
 public interface CourseService {
     /**
-     * A Provider implementation for CourseService.
+     * A RoboGuice Provider implementation for CourseService.
      */
-    @Module
-    @InstallIn(SingletonComponent.class)
-    class Provider {
+    class Provider implements com.google.inject.Provider<CourseService> {
+        @Inject
+        RetrofitProvider retrofitProvider;
 
-        @Singleton
-        @Provides
-        public CourseService get(@NonNull RetrofitProvider retrofitProvider) {
+        @Override
+        public CourseService get() {
             return retrofitProvider.getWithOfflineCache().create(CourseService.class);
         }
     }
@@ -154,14 +147,9 @@ public interface CourseService {
     Call<Void> updateCoursewareCelebration(@Path("course_id") final String courseId, @Body HashMap<String, Boolean> courseBody);
 
     final class BlocksCompletionBody {
-        @NonNull
-        String username;
-
-        @NonNull
-        String courseKey;
-
-        @NonNull
-        HashMap<String, String> blocks = new HashMap<>();
+        @NonNull String username;
+        @NonNull String courseKey;
+        @NonNull HashMap<String, String> blocks = new HashMap<>();
 
         public BlocksCompletionBody(@NonNull String username, @NonNull String courseKey, @NonNull String[] blockIds) {
             this.username = username;
@@ -174,7 +162,6 @@ public interface CourseService {
 
     final class EnrollBody {
         @NonNull
-        @SerializedName("course_details")
         private final CourseDetails courseDetails;
 
         public EnrollBody(@NonNull final String courseId, final boolean emailOptIn) {
@@ -183,10 +170,7 @@ public interface CourseService {
 
         private static class CourseDetails {
             @NonNull
-            @SerializedName("course_id")
             private final String courseId;
-
-            @SerializedName("email_opt_in")
             private final boolean emailOptIn;
 
             CourseDetails(@NonNull final String courseId, final boolean emailOptIn) {

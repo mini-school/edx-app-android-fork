@@ -11,17 +11,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
 
 import org.edx.mobile.R;
 
-import dagger.hilt.android.AndroidEntryPoint;
+import roboguice.fragment.RoboDialogFragment;
 
 /**
  * Wrapper class to create a basic fragment dialog.
  */
-@AndroidEntryPoint
-public class AlertDialogFragment extends DialogFragment {
+public class AlertDialogFragment extends RoboDialogFragment {
     protected static final String ARG_LAYOUT_RES = "ARG_LAYOUT_RES";
     protected static final String ARG_TITLE = "ARG_TITLE";
     protected static final String ARG_TITLE_RES = "ARG_TITLE_RES";

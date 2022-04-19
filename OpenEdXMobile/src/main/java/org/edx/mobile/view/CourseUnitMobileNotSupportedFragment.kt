@@ -1,45 +1,35 @@
 package org.edx.mobile.view
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.StringRes
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.Purchase
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.edx.mobile.R
 import org.edx.mobile.databinding.FragmentCourseUnitGradeBinding
-import org.edx.mobile.exception.ErrorMessage
 import org.edx.mobile.extenstion.isNotVisible
 import org.edx.mobile.extenstion.setImageDrawable
 import org.edx.mobile.extenstion.setVisibility
 import org.edx.mobile.http.HttpStatus
-import org.edx.mobile.http.notifications.SnackbarErrorNotification
+import org.edx.mobile.http.HttpStatusException
 import org.edx.mobile.inapppurchases.BillingProcessor
 import org.edx.mobile.inapppurchases.BillingProcessor.BillingFlowListeners
 import org.edx.mobile.inapppurchases.ProductManager
 import org.edx.mobile.model.api.AuthorizationDenialReason
 import org.edx.mobile.model.course.CourseComponent
-import org.edx.mobile.util.AppConstants
 import org.edx.mobile.util.BrowserUtil
-import org.edx.mobile.util.InAppPurchasesException
 import org.edx.mobile.util.NonNullObserver
-import org.edx.mobile.util.ResourceUtil
 import org.edx.mobile.view.dialog.AlertDialogFragment
 import org.edx.mobile.viewModel.InAppPurchasesViewModel
+import org.edx.mobile.viewModel.ViewModelFactory
 
-@AndroidEntryPoint
 class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
-
     private lateinit var binding: FragmentCourseUnitGradeBinding
     private var billingProcessor: BillingProcessor? = null
-
-    private val iapViewModel: InAppPurchasesViewModel by viewModels()
+    private lateinit var iapViewModel: InAppPurchasesViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -112,6 +102,11 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
 
     private fun setUpUpgradeButton(isSelfPaced: Boolean, price: String) {
         if (environment.config.isIAPEnabled) {
+            iapViewModel = ViewModelProvider(
+                this,
+                ViewModelFactory()
+            ).get(InAppPurchasesViewModel::class.java)
+
             initObserver()
             binding.layoutUpgradeBtn.root.setVisibility(true)
             binding.layoutUpgradeBtn.btnUpgrade.setOnClickListener {
@@ -126,26 +121,9 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
             }
 
             billingProcessor = BillingProcessor(requireContext(), object : BillingFlowListeners {
-
-                override fun onBillingSetupFinished(billingResult: BillingResult) {
-                    super.onBillingSetupFinished(billingResult)
-                    // Shimmer container taking sometime to get ready and perform the animation, so
-                    // by adding the some delay fixed that issue for lower-end devices, and for the
-                    // proper animation.
-                    binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
-                        unit?.let { initializeProductPrice(it.courseId) }
-                    }, 1500)
-                    binding.layoutUpgradeBtn.btnUpgrade.isEnabled = false
-                }
-
-                override fun onPurchaseCancel(responseCode: Int, message: String) {
+                override fun onPurchaseCancel() {
                     iapViewModel.endLoading()
-                    showUpgradeErrorDialog(
-                        errorResId = R.string.error_payment_not_processed,
-                        feedbackErrorCode = responseCode,
-                        feedbackErrorMessage = message,
-                        feedbackEndpoint = ErrorMessage.PAYMENT_SDK_CODE
-                    )
+                    showUpgradeErrorDialog()
                 }
 
                 override fun onPurchaseComplete(purchase: Purchase) {
@@ -155,41 +133,6 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
         } else {
             binding.layoutUpgradeBtn.root.setVisibility(false)
         }
-    }
-
-    private fun initializeProductPrice(courseId: String) {
-        ProductManager.getProductByCourseId(courseId)?.let { productId ->
-            billingProcessor?.querySyncDetails(
-                productId = productId
-            ) { _, skuDetails ->
-                val skuDetail = skuDetails?.get(0)
-                if (skuDetail?.sku == productId) {
-                    binding.layoutUpgradeBtn.btnUpgrade.text =
-                        ResourceUtil.getFormattedString(
-                            resources,
-                            R.string.label_upgrade_course_button,
-                            AppConstants.PRICE,
-                            skuDetail.price
-                        ).toString()
-                    // The app get the sku details instantly, so add some wait to perform
-                    // animation at least one cycle.
-                    binding.layoutUpgradeBtn.shimmerViewContainer.postDelayed({
-                        binding.layoutUpgradeBtn.shimmerViewContainer.hideShimmer()
-                        binding.layoutUpgradeBtn.btnUpgrade.isEnabled = true
-                    }, 500)
-                } else {
-                    showUpgradeErrorDialog(
-                        errorResId = R.string.error_price_not_fetched,
-                        listener = { _, _ ->
-                            unit?.let { initializeProductPrice(it.courseId) }
-                        })
-                }
-            }
-        } ?: showUpgradeErrorDialog(
-            errorResId = R.string.error_price_not_fetched,
-            listener = { _, _ ->
-                unit?.let { initializeProductPrice(it.courseId) }
-            })
     }
 
     private fun initObserver() {
@@ -203,13 +146,14 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
         })
 
         iapViewModel.executeOrderResponse.observe(viewLifecycleOwner, NonNullObserver {
-            showPurchaseSuccessSnackbar()
+            showUpgradeCompleteDialog()
         })
 
         iapViewModel.errorMessage.observe(viewLifecycleOwner, NonNullObserver { errorMsg ->
-            if (errorMsg.throwable is InAppPurchasesException) {
-                when (errorMsg.throwable.httpErrorCode) {
-                    HttpStatus.UNAUTHORIZED -> {
+            if (errorMsg.throwable is HttpStatusException) {
+                when (errorMsg.throwable.statusCode) {
+                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.FORBIDDEN -> {
                         environment.router?.forceLogout(
                             requireContext(),
                             environment.analyticsRegistry,
@@ -217,15 +161,10 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
                         )
                         return@NonNullObserver
                     }
-                    else -> showUpgradeErrorDialog(
-                        errorMsg.errorResId,
-                        errorMsg.throwable.httpErrorCode,
-                        errorMsg.throwable.errorMessage,
-                        errorMsg.errorCode
-                    )
+                    else -> showUpgradeErrorDialog()
                 }
             } else {
-                showUpgradeErrorDialog(errorMsg.errorResId)
+                showUpgradeErrorDialog()
             }
             iapViewModel.errorMessageShown()
         })
@@ -250,33 +189,30 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
         iapViewModel.executeOrder(purchaseToken = purchaseToken)
     }
 
-    private fun showUpgradeErrorDialog(
-        @StringRes errorResId: Int = R.string.general_error_message,
-        feedbackErrorCode: Int? = null,
-        feedbackErrorMessage: String? = null,
-        feedbackEndpoint: Int? = null,
-        listener: DialogInterface.OnClickListener? = null
-    ) {
+    private fun showUpgradeErrorDialog() {
         AlertDialogFragment.newInstance(
             getString(R.string.title_upgrade_error),
-            getString(errorResId),
-            getString(if (listener != null) R.string.try_again else R.string.label_close),
-            listener,
-            getString(if (listener != null) R.string.label_cancel else R.string.label_get_help)
+            getString(R.string.upgrade_error_message),
+            getString(R.string.label_close),
+            null,
+            getString(R.string.label_get_help)
         ) { _, _ ->
-            listener?.let { return@newInstance }
             environment.router?.showFeedbackScreen(
                 requireActivity(),
-                getString(R.string.email_subject_upgrade_error),
-                feedbackErrorCode,
-                feedbackEndpoint,
-                feedbackErrorMessage
+                getString(R.string.email_subject_upgrade_error)
             )
         }.show(childFragmentManager, null)
     }
 
-    private fun showPurchaseSuccessSnackbar() {
-        SnackbarErrorNotification(binding.root).showError(R.string.purchase_success_message)
+    private fun showUpgradeCompleteDialog() {
+        AlertDialogFragment.newInstance(
+            getString(R.string.title_upgrade_complete),
+            getString(R.string.upgrade_success_message),
+            getString(R.string.label_continue),
+            null,
+            null,
+            null
+        ).show(childFragmentManager, null)
     }
 
     override fun onResume() {
