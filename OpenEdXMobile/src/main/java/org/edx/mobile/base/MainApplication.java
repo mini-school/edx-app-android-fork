@@ -29,6 +29,7 @@ import org.edx.mobile.event.AppUpdatedEvent;
 import org.edx.mobile.event.NewRelicEvent;
 import org.edx.mobile.http.HttpStatus;
 import org.edx.mobile.logger.Logger;
+import org.edx.mobile.mediation.Adverts;
 import org.edx.mobile.model.api.UnacknowledgedNoticeResponse;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
 import org.edx.mobile.module.analytics.FirebaseAnalytics;
@@ -157,6 +158,11 @@ public abstract class MainApplication extends MultiDexApplication {
             Appboy.configure(this, appboyConfig);
             registerActivityLifecycleCallbacks(new AppboyLifecycleCallbackListener(true, true));
         }
+        
+        //initialize Adverts
+        Adverts adverts;
+        adverts = new Adverts();
+        adverts.loadBannerAd();
     }
 
     public void showBanner(LoginAPI loginAPI, boolean delayCall) {
