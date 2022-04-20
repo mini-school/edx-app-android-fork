@@ -183,11 +183,6 @@ dependencies {
             strictly '18.0.3'
         }
     }
-    implementation("com.my.tracker:mytracker-sdk") {
-        version {
-            strictly '3.0.1'
-        }
-    }
     implementation 'com.google.android.gms:play-services-ads:20.6.0'
     //implementation  'androidx.annotation:annotation:4.7.0.0'
     implementation  'com.google.ads.mediation:adcolony:4.7.0.0'
@@ -195,9 +190,7 @@ dependencies {
     implementation  'com.google.ads.mediation:facebook:6.8.0.0'
     implementation  'com.google.ads.mediation:inmobi:10.0.5.0'
     implementation  'com.google.ads.mediation:ironsource:7.2.1.0'
-    implementation  ("com.google.ads.mediation:mytarget:5.15.1.0") {
-        exclude group: 'com.my.tracker', module: 'mytracker-sdk'
-    }
+//    implementation  'com.google.ads.mediation:mytarget:5.15.0.0'
     implementation  'com.google.ads.mediation:tapjoy:12.9.0.0'
     implementation  'com.google.ads.mediation:verizonmedia:1.14.0.0'
     implementation  'com.google.ads.mediation:vungle:6.10.5.0'
