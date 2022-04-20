@@ -85,6 +85,9 @@ public class Adverts extends BaseAppActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_banner_ads);
 
+    }
+    
+    public void initializeAds() {
         isAdActivated = false;
         isTestMode = true;
 
